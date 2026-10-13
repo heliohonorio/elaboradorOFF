@@ -244,7 +244,7 @@ el('start-create').onclick=()=>openEditor('create');
 el('start-import').onclick=()=>{el('import-panel').hidden=false;el('import-file').focus()};
 el('import-back').onclick=()=>{el('import-panel').hidden=true;el('import-status').textContent='';el('import-file').value='';el('import-selected').hidden=true;hideImportProgress()};
 el('return-home').onclick=()=>{el('editor-layout').hidden=true;el('editor-back').hidden=true;el('start-screen').hidden=false;el('import-panel').hidden=true;window.scrollTo({top:0,behavior:'smooth'})};
-async async function loadImportLibrary(url,check){
+async function loadImportLibrary(url,check){
  if(check())return;
  await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=url;s.onload=resolve;s.onerror=()=>reject(Error('Não foi possível carregar o leitor do documento. Verifique a conexão.'));document.head.appendChild(s)});
  if(!check())throw Error('O leitor de arquivos não está disponível.');
