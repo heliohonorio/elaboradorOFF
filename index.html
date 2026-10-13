@@ -157,15 +157,16 @@ const municipalityCorrections={
  'praia grande':'Praia Grande','santos':'Santos','osasco':'Osasco'
 };
 function normalizeMunicipality(value){
- const raw=value.trim().replace(/\\s+/g,' ');
+ const raw=value.trim().replace(/\s+/g,' ');
  if(!raw)return '';
- const key=raw.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR');
- if(municipalityCorrections[key])return municipalityCorrections[key];
+ const key=raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+ if(Object.prototype.hasOwnProperty.call(municipalityCorrections,key))return municipalityCorrections[key];
  const minor=new Set(['de','do','da','dos','das','e']);
- return raw.toLocaleLowerCase('pt-BR').replace(/(^|[\\s-])([^\\s-]+)/g,(all,sep,word,index)=>{
-   if(index>0&&minor.has(word))return sep+word;
-   return sep+word.charAt(0).toLocaleUpperCase('pt-BR')+word.slice(1);
- });
+ return raw.toLocaleLowerCase('pt-BR').split(/(\s+|-)/).map((part,index)=>{
+  if(!part||/^\s+$/.test(part)||part==='-')return part;
+  if(index>0&&minor.has(part))return part;
+  return part.charAt(0).toLocaleUpperCase('pt-BR')+part.slice(1);
+ }).join('');
 }
 const cityField=el('cidade');
 cityField.addEventListener('blur',()=>{const formatted=normalizeMunicipality(cityField.value);if(cityField.value!==formatted){cityField.value=formatted;render()}});
