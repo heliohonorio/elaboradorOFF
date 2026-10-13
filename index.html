@@ -22,6 +22,12 @@
 .crest-caption{display:block;width:26mm;max-width:26mm;font:5pt/1.15 "Times New Roman",serif;text-align:center;white-space:normal;overflow-wrap:anywhere}
 .letter-head h3{margin-left:16mm;max-width:calc(100% - 16mm)}
 @media print{.paper-frame{padding:0!important;overflow:visible!important}.paper{zoom:1!important}}
+/* Refinamento do alinhamento institucional, sem alterar a área recortada do brasão. */
+.letter-head{min-height:37mm}
+.letter-head>div{top:0}
+.letter-head h3{margin:0 0 0 16mm;max-width:calc(100% - 16mm);padding-top:1.5mm;line-height:1.12}
+.meta{margin-top:2mm}
+@media print{.letter-head{min-height:37mm}.letter-head h3{margin-left:16mm;padding-top:1.5mm}.meta{margin-top:2mm}}
 /* A linha vertical está incorporada à borda direita do PNG do brasão.
    Ocultar somente a faixa periférica, sem alterar o cabeçalho. */
 .crest{clip-path:inset(0 7% 9% 0)!important}
