@@ -607,19 +607,55 @@ async function createDocumentPdf(){
   return pdf.output('blob');
  }finally{holder.remove()}
 }
+let preparedShareFile=null;
+function downloadPreparedPdf(file){
+ const url=URL.createObjectURL(file),link=document.createElement('a');
+ link.href=url;link.download=file.name;document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+function resetPreparedShare(){
+ preparedShareFile=null;
+ const button=el('share');if(button&&!button.disabled)button.textContent='Compartilhar documento (PDF)';
+}
+document.querySelectorAll('input,textarea,select').forEach(field=>{
+ field.addEventListener('input',resetPreparedShare);
+ field.addEventListener('change',resetPreparedShare);
+});
 el('share').onclick=async()=>{
  const status=el('ai-status'),button=el('share');
- if(documentMode!=='import'&&!el('relato').value.trim()){status.textContent='Preencha o relato antes de compartilhar o documento.';return}
- if(!navigator.share||!navigator.canShare){status.textContent='Este navegador não permite compartilhar arquivos diretamente. Use Salvar / Imprimir PDF e envie o arquivo pelo WhatsApp.';return}
- button.disabled=true;button.textContent='Preparando PDF...';status.textContent='Gerando documento PDF para compartilhamento...';
+ if(documentMode!=='import'&&!el('relato').value.trim()){
+  status.textContent='Preencha o relato antes de compartilhar o documento.';return;
+ }
+ if(preparedShareFile){
+  const file=preparedShareFile;
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+   try{
+    // Compartilhamento chamado diretamente pelo toque, sem processamento assíncrono anterior.
+    await navigator.share({files:[file],title:document.title});
+    status.textContent='PDF enviado ao menu de compartilhamento.';
+   }catch(e){
+    if(e.name==='AbortError')return;
+    downloadPreparedPdf(file);
+    status.textContent='O navegador bloqueou o compartilhamento direto. O PDF foi disponibilizado para download; envie-o pelo WhatsApp ou outro aplicativo.';
+   }
+  }else{
+   downloadPreparedPdf(file);
+   status.textContent='O navegador não permite compartilhar arquivos diretamente. O PDF foi disponibilizado para download.';
+  }
+  return;
+ }
+ button.disabled=true;button.textContent='Preparando PDF...';
+ status.textContent='Gerando documento PDF. Quando estiver pronto, toque novamente para compartilhar.';
  try{
-  render();const blob=await createDocumentPdf();
-  const file=new File([blob],document.title+'.pdf',{type:'application/pdf'});
-  if(!navigator.canShare({files:[file]}))throw Error('O navegador não permite compartilhar PDF diretamente. Salve o PDF e envie o arquivo pelo WhatsApp.');
-  await navigator.share({files:[file],title:document.title});
-  status.textContent='Documento PDF preparado para compartilhamento.';
- }catch(e){if(e.name!=='AbortError')status.textContent='Não foi possível compartilhar o PDF: '+(e.message||'erro desconhecido')+'. Você pode usar Salvar / Imprimir PDF.'}
- finally{button.disabled=false;button.textContent='Compartilhar documento (PDF)'}
+  render();
+  const blob=await createDocumentPdf();
+  preparedShareFile=new File([blob],document.title+'.pdf',{type:'application/pdf'});
+  button.textContent='Compartilhar PDF pronto';
+  status.textContent='PDF pronto! Toque em “Compartilhar PDF pronto” para abrir o compartilhamento. Se o navegador bloquear, o arquivo será disponibilizado para download.';
+ }catch(e){
+  status.textContent='Não foi possível gerar o PDF: '+(e.message||'erro desconhecido')+'.';
+  button.textContent='Compartilhar documento (PDF)';
+ }finally{button.disabled=false}
 };
 
 showStage(0);
