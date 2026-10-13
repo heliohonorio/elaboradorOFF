@@ -575,16 +575,20 @@ el('prev-step').onclick=()=>showStage(currentStage-1);
 document.querySelectorAll('.stage-tab').forEach(b=>b.onclick=()=>{const n=Number(b.dataset.stage);if(n<=currentStage||validateStage())showStage(n)});
 el('preview-toggle').onclick=()=>{const open=el('preview-frame').classList.toggle('preview-open');el('preview-toggle').setAttribute('aria-expanded',String(open));el('preview-toggle').textContent=open?'Ocultar A4':'Visualizar A4';if(open)requestAnimationFrame(fitPaper)};
 async function loadPdfExporter(){
- if(window.html2pdf)return window.html2pdf;
- await new Promise((resolve,reject)=>{
-  const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-  s.onload=resolve;s.onerror=()=>reject(Error('Não foi possível carregar o gerador de PDF. Verifique a conexão.'));document.head.appendChild(s);
- });
- if(!window.html2pdf)throw Error('Gerador de PDF indisponível.');
- return window.html2pdf;
+ if(window.jspdf?.jsPDF&&window.html2canvas)return;
+ if(window.html2pdf?.jsPDF&&window.html2canvas){window.jspdf={jsPDF:window.html2pdf.jsPDF};return}
+ const urls=[
+  ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF],
+  ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',()=>!!window.html2canvas]
+ ];
+ for(const [url,ready] of urls){
+  if(ready())continue;
+  await loadImportLibrary(url,ready);
+ }
+ if(!window.jspdf?.jsPDF||!window.html2canvas)throw Error('Não foi possível preparar o gerador de PDF. Verifique a conexão.');
 }
 async function createDocumentPdf(){
- const exporter=await loadPdfExporter();paginateDocument();
+ await loadPdfExporter();paginateDocument();
  const originals=allPaperPages();
  const holder=document.createElement('div');holder.style.cssText='position:fixed;left:-5000px;top:0;width:210mm;background:white;z-index:-1';
  const copies=originals.map(page=>{
@@ -594,8 +598,6 @@ async function createDocumentPdf(){
  });
  document.body.appendChild(holder);
  try{
-  const jsPDF=window.jspdf?.jsPDF;
-  if(!jsPDF)await loadPdfExporter();
   const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
   for(let i=0;i<copies.length;i++){
    const canvas=await window.html2canvas(copies[i],{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:1000});
