@@ -577,6 +577,11 @@ function fitInstitutionalEmail(){
  }
  node.style.fontSize=Math.max(4.5,pt)+'pt';
 }
+function formatMetaFinal(text){
+ const value=String(text).trim();
+ if(!value||/[—–-]$/.test(value))return value;
+ return value.replace(/[.;]+\\s*$/,'')+'.';
+}
 function setMetaLines(lines){
  const meta=el('meta');meta.replaceChildren();
  lines.forEach(line=>{
@@ -599,7 +604,7 @@ function setMetaLines(lines){
 function renderExtrasOnly(){
  const v=id=>el(id).value.trim();
  const date=v('data')?new Date(v('data')+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'—';
- const lines=[(normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.','PARTE Nº '+(v('numero')||'—'),'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),'Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao '),'Assunto: '+(v('assunto')||'—')];
+ const lines=[(normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.','PARTE Nº '+(v('numero')||'—'),'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),formatMetaFinal('Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao ')),formatMetaFinal('Assunto: '+(v('assunto')||'—'))];
  for(const [id,label] of [['referencia','Referência'],['anexo','Anexo'],['interessado','Interessado'],['outro','Outro']]){
   if(!el('check-'+id)?.checked)continue;
   const values=[el('extra-'+id),...el('more-'+id).querySelectorAll('input')].map(input=>input.value.trim().replace(/[.;\\s]+$/,'')).filter(Boolean);
@@ -611,7 +616,7 @@ function renderExtrasOnly(){
  setMetaLines(lines);
  checkPage();
 }
-function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.parentElement!==first)first.appendChild(sig);const motto=document.querySelector('#preview-frame .motto');if(motto&&motto.parentElement!==first)first.appendChild(motto);allPaperPages().slice(1).forEach(p=>p.remove());updateDocumentTitle();const v=id=>el(id).value.trim();const date=v('data')?new Date(v('data')+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'—';const lines=[(normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.','PARTE Nº '+(v('numero')||'—'),'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),'Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao '),'Assunto: '+(v('assunto')||'—')];for(const [id,label] of [['referencia','Referência'],['anexo','Anexo'],['interessado','Interessado'],['outro','Outro']]){
+function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.parentElement!==first)first.appendChild(sig);const motto=document.querySelector('#preview-frame .motto');if(motto&&motto.parentElement!==first)first.appendChild(motto);allPaperPages().slice(1).forEach(p=>p.remove());updateDocumentTitle();const v=id=>el(id).value.trim();const date=v('data')?new Date(v('data')+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'—';const lines=[(normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.','PARTE Nº '+(v('numero')||'—'),'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),formatMetaFinal('Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao ')),formatMetaFinal('Assunto: '+(v('assunto')||'—'))];for(const [id,label] of [['referencia','Referência'],['anexo','Anexo'],['interessado','Interessado'],['outro','Outro']]){
  if(!el('check-'+id)?.checked)continue;
  const values=[el('extra-'+id),...el('more-'+id).querySelectorAll('input')].map(input=>input.value.trim().replace(/[.;\\s]+$/,'')).filter(Boolean);
  if(!values.length)values.push('—');
