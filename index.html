@@ -244,7 +244,7 @@ el('start-create').onclick=()=>openEditor('create');
 el('start-import').onclick=()=>{el('import-panel').hidden=false;el('import-file').focus()};
 el('import-back').onclick=()=>{el('import-panel').hidden=true;el('import-status').textContent='';el('import-file').value='';el('import-selected').hidden=true;hideImportProgress()};
 el('return-home').onclick=()=>{el('editor-layout').hidden=true;el('editor-back').hidden=true;el('start-screen').hidden=false;el('import-panel').hidden=true;window.scrollTo({top:0,behavior:'smooth'})};
-async function loadImportLibrary(url,check){
+async async function loadImportLibrary(url,check){
  if(check())return;
  await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=url;s.onload=resolve;s.onerror=()=>reject(Error('Não foi possível carregar o leitor do documento. Verifique a conexão.'));document.head.appendChild(s)});
  if(!check())throw Error('O leitor de arquivos não está disponível.');
@@ -253,7 +253,18 @@ function setImportProgress(percent,label){const value=Math.max(0,Math.min(100,Ma
 function hideImportProgress(){el('import-progress').hidden=true}
 /* Extrai o texto de arquivos Word 97–2003 (.doc) via estrutura OLE/CFB e tabela de peças. */
 async function extractLegacyWord(file){
- await loadImportLibrary('https://cdn.jsdelivr.net/npm/cfb@1.2.2/dist/cfb.full.min.js',()=>!!window.CFB);
+ if(!window.CFB){
+  const urls=[
+   'https://cdn.jsdelivr.net/npm/cfb@1.2.2/dist/cfb.min.js',
+   'https://unpkg.com/cfb@1.2.2/dist/cfb.min.js',
+   'https://cdn.jsdelivr.net/npm/cfb@1.2.2/dist/cfb.js'
+  ];
+  let loaded=false;
+  for(const url of urls){
+   try{await loadImportLibrary(url,()=>!!window.CFB);loaded=true;break}catch(e){/* Tenta outro servidor. */}
+  }
+  if(!loaded)throw Error('Não foi possível carregar o leitor de arquivos Word antigos. Tente novamente ou salve o documento como DOCX.');
+ }
  const bytes=new Uint8Array(await file.arrayBuffer());
  if(bytes.length<512||![0xd0,0xcf,0x11,0xe0].every((v,i)=>bytes[i]===v))throw Error('O arquivo não parece ser um documento Word 97–2003 válido.');
  const cfb=window.CFB.read(bytes,{type:'array'});
