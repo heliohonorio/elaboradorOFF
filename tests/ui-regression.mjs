@@ -71,14 +71,14 @@ function match(expected,actual,label){
    // As únicas divergências admitidas na referência antiga são correções da
    // PRÉVIA: continuação com recuo do PDF (24 mm), assinatura com margem
    // do PDF (13 mm) e lema na altura real do PDF (5 mm).
-   if(/\\[\\d+\\]\\.paragraphs\\[\\d+\\]\\.dims\\.indent$/.test(path)
+   if(path.includes('.paragraphs[')&&path.endsWith('.dims.indent')
      && typeof a==='string'&&typeof b==='string'
      && parseFloat(a)>50&&Math.abs(parseFloat(b)/parseFloat(a)-1.5)<.02)return;
-   if(/\\[\\d+\\]\\.signature\\.dims\\.marginTop$/.test(path)
+   if(path.includes('.signature.dims.marginTop')
      && a==='35px'&&Math.abs(parseFloat(b)-49.13)<1.2)return;
-   if(/\\[\\d+\\]\\.signature\\.dims\\.y$/.test(path)
+   if(path.includes('.signature.dims.y')
      && typeof a==='number'&&typeof b==='number'&&Math.abs((b-a)-14.1)<2)return;
-   if(/\\[\\d+\\]\\.motto\\.dims\\.y$/.test(path)
+   if(path.includes('.motto.dims.y')
      && typeof a==='number'&&typeof b==='number'&&Math.abs((b-a)-45.4)<2)return;
    if(a===null||b===null){assert.equal(a,b,path);return}
    if(typeof a==='number'&&typeof b==='number'){assert.ok(Math.abs(a-b)<1.1,path+': geometria A4 alterada '+a+' => '+b);return}
