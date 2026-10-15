@@ -28,7 +28,7 @@ async function measure(page){
      const sig=p.querySelector('.signature');
      const motto=p.querySelector('.motto');
      return {
-       num:i+1,words:txt.map(x=>x.textContent).join(' '),fragments:txt.length,
+       num:i+1,stop:stop,words:txt.map(x=>x.textContent).join(' '),fragments:txt.length,
        textEnd:txt.length?txt.at(-1).getBoundingClientRect().bottom:null,
        blank:txt.length?stop-txt.at(-1).getBoundingClientRect().bottom:null,
        sign:!!sig,signEnd:sig?.getBoundingClientRect().bottom||null,
@@ -49,7 +49,7 @@ function verify(m,raw,name){
  assert.equal(m.pages.filter(p=>p.sign).length,1,name+' assinatura repetida/ausente');
  assert.ok(m.pages.at(-1).sign&&m.pages.at(-1).fragments>0,name+' folha apenas com assinatura');
  assert.equal(m.pages.filter(p=>p.motto).length,1,name+' lema duplicado');
- assert.ok(m.pages.every(p=>!p.overflow),name+' texto ou assinatura ultrapassa a margem inferior');
+ assert.ok(m.pages.every(p=>!p.overflow),name+' texto ou assinatura ultrapassa a margem inferior: '+JSON.stringify(m.pages.map(p=>({n:p.num,blank:Math.round(p.blank||0),textEnd:p.textEnd,signEnd:p.signEnd,stop:p.stop,sign:p.sign}))));
  assert.ok(m.pages.every(p=>p.font==='16px'),name+' perdeu Times New Roman 12pt');
  const excess=m.pages.slice(0,-1).filter(p=>p.blank>190);
  assert.ok(!excess.length,name+' quebra precoce '+JSON.stringify(excess.map(p=>({n:p.num,blank:Math.round(p.blank)}))));
@@ -77,7 +77,8 @@ async function run(engine,device,deviceName){
    await check(sample.name,async()=>{
      await page.evaluate(t=>{const node=document.getElementById('relato');node.value=t;node.dispatchEvent(new Event('input',{bubbles:true}))},sample.text);
      await wait(170);
-     const a=await measure(page);verify(a,sample.text,sample.name);
+     const a=await measure(page);
+     console.log('MEDIDAS',prefix+'/'+sample.name,JSON.stringify(a.pages.map(p=>({n:p.num,blank:Math.round(p.blank||0),stop:Math.round(p.stop),textEnd:Math.round(p.textEnd||0),signEnd:Math.round(p.signEnd||0),sign:p.sign,overflow:p.overflow}))));verify(a,sample.text,sample.name);
      assert.ok(a.count<=sample.max,'número excessivo de páginas: '+a.count);
      const b=await measure(page);
      assert.deepEqual(a.pages.map(p=>p.words),b.pages.map(p=>p.words),'paginação instável');
@@ -108,7 +109,8 @@ async function run(engine,device,deviceName){
     await page.mouse.up();
     assert.ok(Math.abs((await page.evaluate(()=>window.scrollY))-before)<3,'tela deslocou ao assinar');
     await page.locator('#sign-apply').click();
-    assert.ok((await page.locator('.paper-last .signature-handwriting').count())===1,'assinatura não posicionada');
+    await page.waitForTimeout(330);
+    assert.ok((await page.locator('.paper-last .signature-handwriting').count())===1,'assinatura não posicionada: '+JSON.stringify(await page.evaluate(()=>({signed:!!handwrittenSignature,marks:[...document.querySelectorAll('.signature-handwriting')].length,dialogHidden:document.getElementById('sign-dialog').hidden,feedback:document.getElementById('sign-feedback').textContent}))));
     const after=await measure(page);
     assert.ok(after.pages.at(-1).sign&&after.pages.at(-1).fragments>0);
   });
