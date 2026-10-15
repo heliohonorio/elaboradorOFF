@@ -472,6 +472,52 @@ html,body{min-height:100%}body{min-height:100dvh}.app{min-height:100dvh;display:
  word-break:normal!important;
  text-align:center!important;
 }
+
+/* Assinatura: espaço físico fixo acima do nome; a linha nunca muda de lugar.
+   CSS isolado — não altera o brasão, os recuos ou a paginação do relato. */
+.doc-head{flex-wrap:wrap}
+.doc-head #sign-open{font-size:12px;min-height:37px;flex:0 0 auto}
+.paper .signature.signed-with-ink{text-align:center!important}
+.paper .signature .signature-text{white-space:pre-line!important}
+.paper .signature .signature-signing-area{
+ position:relative!important;width:66mm!important;max-width:100%!important;
+ height:17mm!important;box-sizing:border-box!important;
+ margin:0 auto 1.5mm!important;padding:0!important;
+ overflow:hidden!important;
+}
+.paper .signature .signature-handwriting{
+ position:absolute!important;left:0!important;bottom:1mm!important;
+ width:100%!important;height:calc(100% - 1.2mm)!important;
+ object-fit:contain!important;object-position:center bottom!important;
+ max-width:100%!important;max-height:100%!important;
+ border:0!important;
+}
+.paper .signature .signature-signing-line{
+ position:absolute!important;bottom:0!important;left:0!important;right:0!important;
+ border-bottom:.2mm solid #222!important;height:0!important;
+}
+.sign-dialog[hidden]{display:none!important}
+.sign-dialog{
+ position:fixed;inset:0;background:#000c;z-index:10000;
+ display:flex;justify-content:center;align-items:center;padding:16px;
+}
+.sign-box{
+ width:min(100%,620px);max-height:92dvh;overflow-y:auto;
+ padding:20px;background:#141417;color:#f7f7f8;
+ border:1px solid #575762;border-radius:16px;
+ box-shadow:0 20px 70px #0009;
+}
+.sign-box h2{margin:0 0 10px;font-size:19px}
+.sign-box .sign-help{font-size:13px;line-height:1.5;color:#e5e5eb;margin:0 0 14px}
+#sign-pad{
+ display:block;width:100%;height:auto;aspect-ratio:960/350;
+ background:#fff;border:2px solid #888;border-radius:9px;
+ touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;
+}
+.sign-feedback{font-size:12px;min-height:18px;margin:9px 0;color:#d2d2dd}
+.sign-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.sign-actions .btn{font-size:12px}
+@media print{#sign-open,.sign-dialog{display:none!important}}
 </style></head><body><main class="app"><header class="header"><div class="brand"><span class="brand-icon"><svg aria-hidden="true" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4M9 12h6M9 15.5h6M9 19h3"/></svg></span> <span class="brand-name">Elaborador<strong>OFF</strong></span></div><div class="header-note">Documentos administrativos, sem complicação.</div></header><div class="intro"><small>ELABORAÇÃO INTELIGENTE</small><h1>Elabore sua parte com facilidade.</h1><p>Preencha, elabore com IA e salve o documento para compartilhar.</p></div><section class="start-screen" id="start-screen" aria-labelledby="start-heading"><div class="start-heading"><span class="start-eyebrow">BEM-VINDO AO ELABORADOROFF</span><h2 id="start-heading">O que deseja fazer?</h2><p>Crie uma nova parte ou aproveite um documento existente.</p></div><div class="start-choices"><button type="button" id="start-create" class="start-choice"><span class="start-icon">＋</span><span><strong>Criar documento</strong></span><span aria-hidden="true">→</span></button><button type="button" id="start-import" class="start-choice"><span class="start-icon">✎</span><span><strong>Editar documento pronto</strong><small>Importar PDF, Word ou TXT e preencher os campos.</small></span><span aria-hidden="true">→</span></button></div><div id="import-panel" class="import-panel" hidden><h3>Selecionar documento</h3><p>Escolha um arquivo PDF (inclusive digitalizado, até 5 páginas com OCR), Word (.doc e .docx) ou TXT. Confira os dados identificados antes de salvar.</p><label for="import-file" class="import-select-button"><span aria-hidden="true">↑</span><span>Selecionar documento do dispositivo<small>Toque aqui para escolher um PDF, Word (.doc/.docx) ou TXT</small></span></label><input id="import-file" class="import-file-input" type="file" accept=".pdf,.doc,.docx,.txt,application/msword,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"><p id="import-selected" class="import-selected" hidden></p><p id="import-status" role="status" aria-live="polite"></p><div id="import-progress" class="ai-progress" hidden><div class="ai-progress-top"><span id="import-progress-label">Preparando documento...</span><span id="import-progress-percent">0%</span></div><div class="ai-progress-track" id="import-progress-track" role="progressbar" aria-label="Progresso do reconhecimento do documento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ai-progress-fill" id="import-progress-fill"></div></div><small>Reconhecimento de texto em andamento. Aguarde a conclusão.</small></div><div class="import-actions"><button type="button" class="btn alt" id="import-back">← Voltar</button><button type="button" class="btn" id="import-confirm" hidden disabled>Carregar no formulário</button></div></div></section><div class="editor-back" id="editor-back" hidden><button type="button" class="btn alt" id="return-home">← Página inicial</button><span id="editor-mode"></span></div><div class="layout" id="editor-layout" hidden><section class="panel form"><h2>Nova parte administrativa</h2><nav class="wizard-nav" aria-label="Etapas"><button type="button" class="stage-tab active" data-stage="0">1. Identificação</button><button type="button" class="stage-tab" data-stage="1">2. Destinatário</button><button type="button" class="stage-tab" data-stage="2">3. Elaboração</button></nav><div id="wizard">
 <div class="step visible"><label for="grad">1. Posto / Graduação</label><select id="grad"><option value="">Selecione...</option><option>Sd PM</option><option>Cb PM</option><option>3º Sgt PM</option><option>2º Sgt PM</option><option>1º Sgt PM</option><option>Subten PM</option><option>2º Ten PM</option><option>1º Ten PM</option><option>Cap PM</option><option>Maj PM</option><option>Ten Cel PM</option><option>Cel PM</option></select></div>
 <div class="step"><label for="re">2. Registro Estatístico (RE)</label><input id="re" placeholder="000000-0" inputmode="numeric" maxlength="8" autocomplete="off" aria-describedby="re-ajuda"><small id="re-ajuda">Informe os 6 números do RE e o dígito verificador. Ex.: 153115-8.</small></div>
@@ -485,7 +531,21 @@ html,body{min-height:100%}body{min-height:100dvh}.app{min-height:100dvh;display:
 <div class="step"><input id="email" type="hidden"><details class="extra-panel"><summary>10. Informações complementares <span>(opcional)</span></summary><div class="extra-panel-content"><small>Selecione apenas os campos que deseja incluir no documento.</small><div class="extra-option"><label class="extra-check"><input type="checkbox" id="check-referencia"> Referência</label><div class="extra-detail" id="detail-referencia" hidden><input id="extra-referencia" placeholder="Ex.: Ofício nº 123/2026"><div class="extra-more" id="more-referencia"></div><button type="button" class="extra-add" data-extra="referencia" aria-label="Adicionar mais referencia">+ <span>Adicionar mais</span></button></div></div><div class="extra-option"><label class="extra-check"><input type="checkbox" id="check-anexo"> Anexo</label><div class="extra-detail" id="detail-anexo" hidden><input id="extra-anexo" placeholder="Ex.: 1) Documento de identificação"><div class="extra-more" id="more-anexo"></div><button type="button" class="extra-add" data-extra="anexo" aria-label="Adicionar mais anexo">+ <span>Adicionar mais</span></button></div></div><div class="extra-option"><label class="extra-check"><input type="checkbox" id="check-interessado"> Interessado</label><div class="extra-detail" id="detail-interessado" hidden><input id="extra-interessado" placeholder="Ex.: Sd PM 123456-7 Fulano"><div class="extra-more" id="more-interessado"></div><button type="button" class="extra-add" data-extra="interessado" aria-label="Adicionar mais interessado">+ <span>Adicionar mais</span></button></div></div><div class="extra-option"><label class="extra-check"><input type="checkbox" id="check-outro"> Outro</label><div class="extra-detail" id="detail-outro" hidden><input id="outro-titulo" placeholder="Nome do campo, ex.: Observação"><input id="extra-outro" placeholder="Informe o conteúdo"><div class="extra-more" id="more-outro"></div><button type="button" class="extra-add" data-extra="outro" aria-label="Adicionar mais outro">+ <span>Adicionar mais</span></button></div></div></div></details></div>
 <div class="step"><label for="relato">11. Relato ou solicitação</label><textarea id="relato" placeholder="Descreva com suas palavras o que deseja solicitar ou comunicar."></textarea></div>
 </div><div class="progress" id="progress">Etapa 1 de 3</div><div class="wizard-controls"><button class="btn alt" id="prev-step" type="button">← Voltar</button><button class="btn" id="next-step" type="button">Avançar →</button></div><div class="actions"><button class="btn" id="ai" type="button">✦ Elaborar com IA</button><button class="btn alt" id="restore" type="button" hidden>Restaurar relato</button><button class="btn alt" id="clear" type="button">Limpar</button><button class="btn" id="print" type="button">Salvar / Imprimir PDF</button><button class="btn alt" id="share" type="button">Compartilhar documento (PDF)</button></div><p class="hint"><span id="ai-status" role="status" aria-live="polite"></span><div id="ai-progress" class="ai-progress" hidden aria-label="Andamento da elaboração"><div class="ai-progress-top"><span id="ai-progress-label">Preparando elaboração...</span><span id="ai-progress-percent">0%</span></div><div class="ai-progress-track" id="ai-progress-track" role="progressbar" aria-label="Progresso estimado da elaboração" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ai-progress-fill" id="ai-progress-fill"></div></div><small id="ai-progress-note">O percentual é uma estimativa. A resposta pode levar mais tempo conforme a demanda da IA.</small></div></p></section>
-<section class="panel"><div class="doc-head"><h2>Prévia do documento</h2><button type="button" class="btn alt" id="edit-paper" aria-pressed="false">✎ Editar folha</button><button type="button" class="btn alt preview-toggle" id="preview-toggle" aria-expanded="false">Visualizar A4</button><span class="muted" id="docstatus">A4 · Rascunho</span></div><div class="paper-frame" id="preview-frame"><article class="paper" id="paper"><div class="letter-head"><div><img class="crest" alt="Brasão da Polícia Militar de São Paulo" src="data:image/png;base64,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"><div class="crest-caption">www.policiamilitar.sp.gov.br</div><div class="crest-unit-email" id="crest-unit-email"></div></div><h3>SECRETARIA DA SEGURANÇA PÚBLICA<br>POLÍCIA MILITAR DO ESTADO DE SÃO PAULO</h3><div class="meta" id="meta"></div></div><div class="body" id="body">O relato aparecerá aqui.</div><div class="signature" id="signature"></div><div class="motto">“Nós, Policiais Militares, sob a proteção de Deus, estamos compromissados com a defesa da Vida, da Integridade Física e da Dignidade da Pessoa Humana.”</div></article></div><p class="hint" id="edit-help" hidden>Toque no cabeçalho, no texto ou na assinatura para editar. O modelo institucional permanece protegido.</p><p class="hint" id="validation">Prévia A4 na mesma escala e com as mesmas medidas usadas na impressão. Confira antes de emitir.</p></section></div><div class="edit-dialog" id="edit-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="edit-title"><div class="edit-box"><h2 id="edit-title">Editar documento</h2><label id="edit-label" for="edit-value">Texto</label><textarea id="edit-value" rows="5"></textarea><p class="hint" id="edit-description">A alteração será aplicada ao documento.</p><div class="actions"><button class="btn alt" type="button" id="edit-cancel">Cancelar</button><button class="btn" type="button" id="edit-save">Salvar alteração</button></div></div></div><footer class="site-footer"><div class="footer-product">✧ ElaboradorOFF <span>· Elaboração administrativa</span></div><div class="footer-credit">Criado por: Sd PM Filho<span>Diretoria de Logística • Setor de Auditoria e Sistemas</span></div><div class="footer-counter" aria-live="polite">↗ Visitas totais <strong id="visit-count">—</strong></div></footer></main><script>
+<section class="panel"><div class="doc-head"><h2>Prévia do documento</h2><button type="button" class="btn alt" id="edit-paper" aria-pressed="false">✎ Editar folha</button><button type="button" class="btn alt" id="sign-open">✍ Assinar</button><button type="button" class="btn alt preview-toggle" id="preview-toggle" aria-expanded="false">Visualizar A4</button><span class="muted" id="docstatus">A4 · Rascunho</span></div><div class="paper-frame" id="preview-frame"><article class="paper" id="paper"><div class="letter-head"><div><img class="crest" alt="Brasão da Polícia Militar de São Paulo" src="data:image/png;base64,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"><div class="crest-caption">www.policiamilitar.sp.gov.br</div><div class="crest-unit-email" id="crest-unit-email"></div></div><h3>SECRETARIA DA SEGURANÇA PÚBLICA<br>POLÍCIA MILITAR DO ESTADO DE SÃO PAULO</h3><div class="meta" id="meta"></div></div><div class="body" id="body">O relato aparecerá aqui.</div><div class="signature" id="signature"></div><div class="motto">“Nós, Policiais Militares, sob a proteção de Deus, estamos compromissados com a defesa da Vida, da Integridade Física e da Dignidade da Pessoa Humana.”</div></article></div><p class="hint" id="edit-help" hidden>Toque no cabeçalho, no texto ou na assinatura para editar. O modelo institucional permanece protegido.</p><p class="hint" id="validation">Prévia A4 na mesma escala e com as mesmas medidas usadas na impressão. Confira antes de emitir.</p></section></div><div class="edit-dialog" id="edit-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="edit-title"><div class="edit-box"><h2 id="edit-title">Editar documento</h2><label id="edit-label" for="edit-value">Texto</label><textarea id="edit-value" rows="5"></textarea><p class="hint" id="edit-description">A alteração será aplicada ao documento.</p><div class="actions"><button class="btn alt" type="button" id="edit-cancel">Cancelar</button><button class="btn" type="button" id="edit-save">Salvar alteração</button></div></div></div><div class="sign-dialog" id="sign-dialog" role="dialog" aria-modal="true" aria-labelledby="sign-title" hidden>
+ <div class="sign-box">
+  <h2 id="sign-title">Assinatura manuscrita</h2>
+  <p class="sign-help">Assine com o dedo, caneta digital ou mouse. O sistema posicionará o desenho <strong>sobre a linha de assinatura</strong>, acima do nome e da graduação, sem permitir que saia do espaço reservado.</p>
+  <canvas id="sign-pad" width="960" height="350" aria-label="Área para desenhar assinatura"></canvas>
+  <p class="sign-feedback" id="sign-feedback" role="status" aria-live="polite">Desenhe sua assinatura na área branca.</p>
+  <div class="sign-actions">
+   <button class="btn alt" type="button" id="sign-clear">Limpar desenho</button>
+   <button class="btn alt" type="button" id="sign-remove" hidden>Remover assinatura</button>
+   <button class="btn alt" type="button" id="sign-cancel">Cancelar</button>
+   <button class="btn" type="button" id="sign-apply">Aplicar assinatura</button>
+  </div>
+ </div>
+</div>
+<footer class="site-footer"><div class="footer-product">✧ ElaboradorOFF <span>· Elaboração administrativa</span></div><div class="footer-credit">Criado por: Sd PM Filho<span>Diretoria de Logística • Setor de Auditoria e Sistemas</span></div><div class="footer-counter" aria-live="polite">↗ Visitas totais <strong id="visit-count">—</strong></div></footer></main><script>
 
 const ids=['grad','re','nome','guerra','cidade','emailUnidade','data','numero','destinatario','assunto','email','relato'];const el=id=>document.getElementById(id);const steps=[...document.querySelectorAll('.step')];el('data').value=new Date().toLocaleDateString('en-CA');
 /* Entrada e importação local: os arquivos não são enviados a servidores para leitura. */
@@ -679,7 +739,7 @@ el('import-confirm').onclick=()=>{
  if(!pendingImport)return;
  if(ids.some(id=>el(id).value.trim()&&id!=='data')&&!confirm('Substituir os dados atuais pelos dados do documento importado?'))return;
  ids.forEach(id=>el(id).value='');
- signatureOverride=null;relatoOriginal=null;el('restore').hidden=true;
+ signatureOverride=null;handwrittenSignature=null;updateSignButton();relatoOriginal=null;el('restore').hidden=true;
  for(const [id,value] of Object.entries(pendingImport.values)){if(ids.includes(id))el(id).value=value}
  if(!el('relato').value.trim()){el('relato').value=pendingImport.raw;el('import-status').textContent='O texto completo foi colocado no relato porque o corpo não pôde ser identificado com segurança.'}
  document.querySelectorAll('.field-wrap').forEach(w=>{const input=w.querySelector('input,textarea'),clear=w.querySelector('.field-clear');if(input&&clear)clear.hidden=!input.value});
@@ -693,7 +753,7 @@ function filled(id){const v=el(id).value.trim();return id==='email'||(id==='re'?
  const display=(grad&&guerra?grad+' '+titleCaseWarName(guerra):grad||titleCaseWarName(guerra)||nome||'Nova parte');
  document.title='ElaboradorOFF — '+display.replace(/[\\/:*?"<>|]/g,'').slice(0,100);
 }
-let signatureOverride=null;function renderRelato(text){
+let signatureOverride=null;let handwrittenSignature=null;function renderRelato(text){
  const container=el('body');container.replaceChildren();
  const lines=text.replace(/\r\n?/g,'\n').split('\n');
  const startsItem=/^\s*\d+(?:\.\d+)*\.\s+\S/;
@@ -761,6 +821,22 @@ function renderExtrasOnly(){
  setMetaLines(lines);
  checkPage();
 }
+function renderSignatureBlock(signatureText){
+ const target=el('signature');if(!target)return;
+ target.replaceChildren();
+ target.classList.toggle('signed-with-ink',Boolean(handwrittenSignature));
+ if(handwrittenSignature){
+  const signingArea=document.createElement('div');
+  signingArea.className='signature-signing-area';
+  const ink=document.createElement('img');ink.className='signature-handwriting';
+  ink.alt='Assinatura manuscrita do signatário';ink.src=handwrittenSignature;
+  const line=document.createElement('div');line.className='signature-signing-line';
+  signingArea.append(ink,line);target.appendChild(signingArea);
+ }
+ const label=document.createElement('div');label.className='signature-text';
+ label.textContent=signatureText;target.appendChild(label);
+ target.style.whiteSpace='pre-line';
+}
 function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.parentElement!==first)first.appendChild(sig);const motto=document.querySelector('#preview-frame .motto');if(motto&&motto.parentElement!==first)first.appendChild(motto);allPaperPages().slice(1).forEach(p=>p.remove());updateDocumentTitle();const v=id=>el(id).value.trim();const date=v('data')?new Date(v('data')+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'—';const lines=[(normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.','PARTE Nº '+(v('numero')||'—'),'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),formatMetaFinal('Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao ')),formatMetaFinal('Assunto: '+(v('assunto')||'—'))];for(const [id,label] of [['referencia','Referência'],['anexo','Anexo'],['interessado','Interessado'],['outro','Outro']]){
  if(!el('check-'+id)?.checked)continue;
  const values=[el('extra-'+id),...el('more-'+id).querySelectorAll('input')].map(input=>input.value.trim().replace(/[.;\\s]+$/,'')).filter(Boolean);
@@ -772,7 +848,7 @@ function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.
   lines.push(heading+': '+values.map((value,index)=>value+(index===values.length-1?'.':';')).join('\\n       '));
  }else lines.push(heading+': '+values[0]+'.');
 }
-el('crest-unit-email').textContent=v('emailUnidade')?institutionalEmail(v('emailUnidade')):'';fitInstitutionalEmail();setMetaLines(lines);el('meta').style.whiteSpace='pre-line';renderRelato(v('relato')||'O relato aparecerá aqui.');el('signature').textContent=signatureOverride!==null?signatureOverride:(v('nome')||'NOME DO SIGNATÁRIO').toUpperCase()+'\n'+(v('grad')||'POSTO / GRADUAÇÃO')+(v('re')?' RE '+v('re'):'');el('signature').style.whiteSpace='pre-line';requestAnimationFrame(checkPage)}function allPaperPages(){return [...document.querySelectorAll('#preview-frame > article.paper')]}
+el('crest-unit-email').textContent=v('emailUnidade')?institutionalEmail(v('emailUnidade')):'';fitInstitutionalEmail();setMetaLines(lines);el('meta').style.whiteSpace='pre-line';renderRelato(v('relato')||'O relato aparecerá aqui.');renderSignatureBlock(signatureOverride!==null?signatureOverride:(v('nome')||'NOME DO SIGNATÁRIO').toUpperCase()+'\n'+(v('grad')||'POSTO / GRADUAÇÃO')+(v('re')?' RE '+v('re'):''));requestAnimationFrame(checkPage)}function allPaperPages(){return [...document.querySelectorAll('#preview-frame > article.paper')]}
 let paginationPending=false;
 function checkPage(){
  if(paginationPending)return;
@@ -788,8 +864,9 @@ function paginateDocument(){
  if(!motto)return;
  const blocks=[...body.children].map(n=>n.cloneNode(true));
  body.replaceChildren();
- const signature=sig.textContent;
- sig.textContent='';
+ // Retirar a assinatura temporariamente para medir os parágrafos;
+ // preservar seus elementos (inclusive a imagem) em vez de apagar o conteúdo.
+ sig.remove();
  first.classList.remove('paper-last');
  first.classList.add('paper-first');
  const pages=[first];let page=first,container=body;
@@ -838,8 +915,8 @@ function paginateDocument(){
  try{
   for(const block of blocks)addBlock(block);
   // A assinatura deve permanecer no DOM original, na última página.
-  page.appendChild(sig);sig.textContent=signature;
-  if(!fits(sig)){sig.remove();newPage();page.appendChild(sig);sig.textContent=signature}
+  page.appendChild(sig);
+  if(!fits(sig)){sig.remove();newPage();page.appendChild(sig)}
   page.appendChild(motto);
   pages.forEach((p,i)=>p.classList.toggle('paper-last',i===pages.length-1));
   el('docstatus').textContent='A4 · '+pages.length+(pages.length===1?' página':' páginas');
@@ -887,7 +964,7 @@ function normalizeMunicipality(value){
 }
 const cityField=el('cidade');
 cityField.addEventListener('blur',()=>{const formatted=normalizeMunicipality(cityField.value);if(cityField.value!==formatted){cityField.value=formatted;render()}});
-const re=el('re');re.addEventListener('input',()=>{const digits=re.value.replace(/\D/g,'').slice(0,7);re.value=digits.length>6?digits.slice(0,6)+'-'+digits.slice(6):digits;render()});const guerra=el('guerra');guerra.addEventListener('input',()=>{const start=guerra.selectionStart;const original=guerra.value;guerra.value=original.toLocaleUpperCase('pt-BR');try{guerra.setSelectionRange(start,start)}catch(e){}});const numero=el('numero');numero.addEventListener('input',()=>{const pos=numero.selectionStart;const old=numero.value;const next=old.toLocaleUpperCase('pt-BR').replace(/[^A-Z0-9ÁÀÂÃÉÊÍÓÔÕÚÜÇºª.\/-\s]/g,'').replace(/\s{2,}/g,' ');if(next!==old){numero.value=next;try{numero.setSelectionRange(Math.max(0,pos-(old.length-next.length)),Math.max(0,pos-(old.length-next.length)))}catch(e){}}const value=numero.value.trim();const warn=el('numero-aviso');warn.textContent=!value?'':(/[\/.\-\s]$/.test(value)||!/[0-9]/.test(value))?'Confira se a numeração está completa antes de imprimir.':'Confira a identificação conforme a numeração oficial da sua OPM.';warn.style.color=warn.textContent.startsWith('Confira se')?'#ffb6a8':'#969bad'});ids.forEach(id=>el(id).addEventListener('input',render));el('clear').onclick=()=>{if(!confirm('Limpar todos os campos desta parte?'))return;ids.forEach(id=>el(id).value='');el('data').value=new Date().toLocaleDateString('en-CA');relatoOriginal=null;signatureOverride=null;el('restore').hidden=true;showStage(0);render();window.scrollTo({top:0,behavior:'smooth'})};el('print').onclick=()=>{if(documentMode!=='import'){for(let n=0;n<3;n++){showStage(n);if(!validateStage())return}}showStage(2);render();paginateDocument();window.print()};
+const re=el('re');re.addEventListener('input',()=>{const digits=re.value.replace(/\D/g,'').slice(0,7);re.value=digits.length>6?digits.slice(0,6)+'-'+digits.slice(6):digits;render()});const guerra=el('guerra');guerra.addEventListener('input',()=>{const start=guerra.selectionStart;const original=guerra.value;guerra.value=original.toLocaleUpperCase('pt-BR');try{guerra.setSelectionRange(start,start)}catch(e){}});const numero=el('numero');numero.addEventListener('input',()=>{const pos=numero.selectionStart;const old=numero.value;const next=old.toLocaleUpperCase('pt-BR').replace(/[^A-Z0-9ÁÀÂÃÉÊÍÓÔÕÚÜÇºª.\/-\s]/g,'').replace(/\s{2,}/g,' ');if(next!==old){numero.value=next;try{numero.setSelectionRange(Math.max(0,pos-(old.length-next.length)),Math.max(0,pos-(old.length-next.length)))}catch(e){}}const value=numero.value.trim();const warn=el('numero-aviso');warn.textContent=!value?'':(/[\/.\-\s]$/.test(value)||!/[0-9]/.test(value))?'Confira se a numeração está completa antes de imprimir.':'Confira a identificação conforme a numeração oficial da sua OPM.';warn.style.color=warn.textContent.startsWith('Confira se')?'#ffb6a8':'#969bad'});ids.forEach(id=>el(id).addEventListener('input',render));el('clear').onclick=()=>{if(!confirm('Limpar todos os campos desta parte?'))return;ids.forEach(id=>el(id).value='');el('data').value=new Date().toLocaleDateString('en-CA');relatoOriginal=null;signatureOverride=null;handwrittenSignature=null;updateSignButton();el('restore').hidden=true;showStage(0);render();window.scrollTo({top:0,behavior:'smooth'})};el('print').onclick=()=>{if(documentMode!=='import'){for(let n=0;n<3;n++){showStage(n);if(!validateStage())return}}showStage(2);render();paginateDocument();window.print()};
 
 for(const id of ['referencia','anexo','interessado','outro']){const check=el('check-'+id),detail=el('detail-'+id);check.addEventListener('change',()=>{detail.hidden=!check.checked;renderExtrasOnly()});detail.querySelectorAll('input').forEach(input=>input.addEventListener('input',renderExtrasOnly));}
 document.querySelectorAll('.extra-add').forEach(button=>button.addEventListener('click',()=>{
@@ -990,6 +1067,88 @@ el('share').onclick=async()=>{
  }finally{button.disabled=false}
 };
 
+/* Assinatura manuscrita local: imagem recortada aos traços, limitada à
+   linha de assinatura, sem servidor e sem modificar o editor existente. */
+const signDialog=el('sign-dialog'),signPad=el('sign-pad'),signContext=signPad.getContext('2d');
+let signDrawing=false,signPointer=null,signHasInk=false;
+signContext.strokeStyle='#101010';signContext.fillStyle='#101010';
+signContext.lineWidth=4.5;signContext.lineCap='round';signContext.lineJoin='round';
+
+function updateSignButton(){
+ const btn=el('sign-open');if(btn)btn.textContent=handwrittenSignature?'✍ Alterar assinatura':'✍ Assinar';
+ const remove=el('sign-remove');if(remove)remove.hidden=!handwrittenSignature;
+}
+function clearSignPad(){
+ signContext.clearRect(0,0,signPad.width,signPad.height);
+ signHasInk=false;signDrawing=false;signPointer=null;
+}
+function closeSignDialog(){
+ signDialog.hidden=true;signDrawing=false;signPointer=null;
+ el('sign-open').focus();
+}
+function signPosition(event){
+ const rect=signPad.getBoundingClientRect();
+ return {x:(event.clientX-rect.left)*signPad.width/rect.width,
+         y:(event.clientY-rect.top)*signPad.height/rect.height};
+}
+signPad.addEventListener('pointerdown',event=>{
+ if(signDialog.hidden||event.isPrimary===false)return;
+ event.preventDefault();signPad.setPointerCapture(event.pointerId);
+ signDrawing=true;signPointer=event.pointerId;signHasInk=true;
+ const point=signPosition(event);signContext.beginPath();signContext.moveTo(point.x,point.y);
+ signContext.lineTo(point.x+.1,point.y+.1);signContext.stroke();
+ el('sign-feedback').textContent='Assinatura desenhada. Toque em “Aplicar assinatura” para inserir no documento.';
+});
+signPad.addEventListener('pointermove',event=>{
+ if(!signDrawing||event.pointerId!==signPointer)return;
+ event.preventDefault();const point=signPosition(event);
+ signContext.lineTo(point.x,point.y);signContext.stroke();
+});
+for(const eventName of ['pointerup','pointercancel','lostpointercapture']){
+ signPad.addEventListener(eventName,event=>{if(event.pointerId===signPointer){signDrawing=false;signPointer=null}});
+}
+function exportSignInk(){
+ const w=signPad.width,h=signPad.height;
+ const rgba=signContext.getImageData(0,0,w,h).data;
+ let minX=w,minY=h,maxX=-1,maxY=-1;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  if(rgba[(y*w+x)*4+3]>10){minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y)}
+ }
+ if(maxX<minX)return null;
+ const padding=8;
+ const x0=Math.max(0,minX-padding),y0=Math.max(0,minY-padding);
+ const x1=Math.min(w,maxX+padding+1),y1=Math.min(h,maxY+padding+1);
+ const trimmed=document.createElement('canvas');
+ trimmed.width=x1-x0;trimmed.height=y1-y0;
+ trimmed.getContext('2d').drawImage(signPad,x0,y0,trimmed.width,trimmed.height,0,0,trimmed.width,trimmed.height);
+ return trimmed.toDataURL('image/png');
+}
+el('sign-open').addEventListener('click',()=>{
+ clearSignPad();updateSignButton();
+ el('sign-feedback').textContent=handwrittenSignature?
+  'Desenhe uma nova assinatura ou mantenha a atual fechando esta janela.':
+  'Desenhe sua assinatura na área branca.';
+ signDialog.hidden=false;el('sign-clear').focus();
+});
+el('sign-clear').addEventListener('click',()=>{
+ clearSignPad();el('sign-feedback').textContent='Área limpa. Desenhe novamente para aplicar.';
+});
+el('sign-cancel').addEventListener('click',closeSignDialog);
+el('sign-remove').addEventListener('click',()=>{
+ handwrittenSignature=null;clearSignPad();updateSignButton();
+ resetPreparedShare();render();closeSignDialog();
+});
+el('sign-apply').addEventListener('click',()=>{
+ if(!signHasInk){el('sign-feedback').textContent='Desenhe a assinatura antes de aplicar.';return}
+ const png=exportSignInk();
+ if(!png){el('sign-feedback').textContent='Não foi possível identificar os traços. Tente novamente.';return}
+ handwrittenSignature=png;updateSignButton();resetPreparedShare();render();closeSignDialog();
+});
+signDialog.addEventListener('click',event=>{if(event.target===signDialog)closeSignDialog()});
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&!signDialog.hidden){event.stopImmediatePropagation();closeSignDialog()}
+});
+updateSignButton();
 showStage(0);
 
 
