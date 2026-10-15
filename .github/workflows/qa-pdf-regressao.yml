@@ -1,0 +1,27 @@
+name: QA PDF - ambiente isolado
+on:
+  push:
+    branches: ["qa/testes-pdf-regressao-20261015"]
+  workflow_dispatch:
+jobs:
+  regressao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar bibliotecas de testes
+        run: |
+          npm install --no-save playwright pdf-lib jspdf html2canvas
+          npx playwright install --with-deps chromium webkit
+      - name: Executar testes no Chromium e WebKit
+        run: node tests/pdf-regression.mjs
+      - name: Salvar evidências
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencias-pdf
+          path: qa-output/
+          if-no-files-found: ignore
