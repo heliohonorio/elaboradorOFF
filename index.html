@@ -560,6 +560,10 @@ html,body{min-height:100%}body{min-height:100dvh}.app{min-height:100dvh;display:
 }
 
 /* Controles simples e legíveis: somente interface, sem regras do A4. */
+/* Mostrar apenas as ações relevantes à etapa atual. */
+body:has(#editor-layout:not([hidden])) .intro{display:none}
+.form:not(:has(.stage-tab[data-stage="2"].active)) .document-actions .pdf-actions{display:none}
+
 .form > .progress{display:none!important} /* As três etapas já estão identificadas na navegação. */
 .form .document-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
 .form .document-actions .ai-actions{display:flex;gap:9px;flex-wrap:wrap}
@@ -1361,6 +1365,13 @@ el('ai').addEventListener('click',async()=>{
  finally{button.disabled=false;button.textContent='✦ Elaborar com IA';}
 });
 el('restore').addEventListener('click',()=>{if(relatoOriginal===null)return;el('relato').value=relatoOriginal;relatoOriginal=null;el('restore').hidden=true;render();el('ai-status').textContent='Relato original restaurado.'});
+/* No celular, a prévia começa recolhida para priorizar o formulário.
+   O A4 continua renderizado e mensurável para impressão/compartilhamento. */
+if(window.matchMedia('(max-width:820px)').matches){
+ el('preview-frame').classList.remove('preview-open');
+ el('preview-toggle').setAttribute('aria-expanded','false');
+ el('preview-toggle').textContent='Visualizar A4';
+}
 render();
 (async()=>{const count=el('visit-count');try{const r=await fetch('https://qxatdgcpamctpkqtrcyl.supabase.co/functions/v1/contador-visitas',{cache:'no-store'});if(!r.ok)throw Error('contador indisponível');const d=await r.json();if(typeof d.total==='number')count.textContent=new Intl.NumberFormat('pt-BR').format(d.total)}catch(e){count.textContent='—'}})();
 function fitPaper(){const frame=document.querySelector('.paper-frame'),paper=document.getElementById('paper');if(!frame||!paper)return;paper.style.zoom='1';const width=paper.getBoundingClientRect().width;const available=frame.clientWidth-16;const zoom=String(Math.min(1,Math.max(.2,available/width)));allPaperPages().forEach(p=>p.style.zoom=zoom)}window.addEventListener('resize',fitPaper);requestAnimationFrame(fitPaper);
