@@ -100,6 +100,43 @@ async function run(engine,device,deviceName){
      return {pages:a.count,blank:a.pages.map(p=>Math.round(p.blank||0))};
    });
   }
+  await check('paridade-tipografica-previa-pdf',async()=>{
+    await page.evaluate(t=>{
+      const node=document.getElementById('relato');
+      node.value=t;node.dispatchEvent(new Event('input',{bubbles:true}));
+      paginateDocument();
+    },fourteenItems);
+    const mismatches=await page.evaluate(()=>{
+      const originals=[...document.querySelectorAll('#preview-frame > article.paper')];
+      const holder=document.createElement('div');
+      holder.style.cssText='position:fixed;left:-5000px;top:0;width:210mm;background:white';
+      const copies=originals.map(p=>{
+        const copy=p.cloneNode(true);
+        copy.removeAttribute('id');
+        copy.style.cssText='display:block!important;position:relative!important;zoom:1!important;transform:none!important;width:210mm!important;height:297mm!important;padding:20mm 15mm 17mm 30mm!important;box-sizing:border-box!important';
+        holder.appendChild(copy);return copy;
+      });
+      document.body.appendChild(holder);
+      const issues=[];
+      const properties=['fontSize','lineHeight','textIndent','textAlign','marginTop','webkitTextSizeAdjust'];
+      originals.forEach((p,i)=>{
+        const selectors=['.body','.relato-paragraph','.relato-continuation','.signature','.motto'];
+        selectors.forEach(selector=>{
+          const one=p.querySelector(selector),two=copies[i].querySelector(selector);
+          if(!one||!two)return;
+          for(const prop of properties){
+            const a=getComputedStyle(one)[prop],b=getComputedStyle(two)[prop];
+            if(a!==b)issues.push('Folha '+(i+1)+' '+selector+' '+prop+': '+a+' vs '+b);
+          }
+        });
+        const motto=p.querySelector('.motto'),clonedMotto=copies[i].querySelector('.motto');
+        if(motto&&clonedMotto&&getComputedStyle(motto).bottom!==getComputedStyle(clonedMotto).bottom)
+          issues.push('Folha '+(i+1)+' posição do lema diferente');
+      });
+      holder.remove();return issues;
+    });
+    assert.deepEqual(mismatches,[],'prévia visual diverge do modelo clonado para PDF');
+  });
   await check('ocultar-visualizar-A4',async()=>{
     const before=await measure(page);
     const initial=await page.locator('#preview-toggle').getAttribute('aria-expanded');
