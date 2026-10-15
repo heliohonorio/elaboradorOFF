@@ -511,7 +511,7 @@ html,body{min-height:100%}body{min-height:100dvh}.app{min-height:100dvh;display:
 .sign-box h2{margin:0 0 10px;font-size:19px}
 .sign-box .sign-help{font-size:13px;line-height:1.5;color:#e5e5eb;margin:0 0 14px}
 #sign-pad{
- display:block;width:100%;height:auto;aspect-ratio:960/350;
+ display:block;width:100%;height:auto;aspect-ratio:960/480;
  background:#fff;border:2px solid #888;border-radius:9px;
  touch-action:none!important;overscroll-behavior:contain!important;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:crosshair;
 }
@@ -619,7 +619,7 @@ body:has(#editor-layout:not([hidden])) .intro{display:none}
  <div class="sign-box">
   <h2 id="sign-title">Assinatura manuscrita</h2>
   <p class="sign-help">Assine com o dedo, caneta digital ou mouse. O sistema posicionará o desenho <strong>sobre a linha de assinatura</strong>, acima do nome e da graduação, sem permitir que saia do espaço reservado.</p>
-  <canvas id="sign-pad" width="960" height="350" aria-label="Área para desenhar assinatura"></canvas>
+  <canvas id="sign-pad" width="960" height="480" aria-label="Área para desenhar assinatura"></canvas>
   <p class="sign-feedback" id="sign-feedback" role="status" aria-live="polite">Desenhe sua assinatura na área branca.</p>
   <div class="sign-actions">
    <button class="btn alt" type="button" id="sign-clear">Limpar desenho</button>
@@ -905,6 +905,18 @@ function renderExtrasOnly(){
  setMetaLines(lines);
  checkPage();
 }
+/* html2canvas (PDF) não respeita sempre object-fit:contain em imagens
+   posicionadas. Dar ao elemento suas dimensões proporcionais reais evita
+   qualquer achatamento ou alongamento sem mudar linha, nome ou paginação. */
+function fitSignatureInkElement(ink){
+ if(!ink.naturalWidth||!ink.naturalHeight)return;
+ const maxWidthMM=66, maxHeightMM=15.8;
+ const widthMM=Math.min(maxWidthMM,maxHeightMM*ink.naturalWidth/ink.naturalHeight);
+ const heightMM=widthMM*ink.naturalHeight/ink.naturalWidth;
+ ink.style.setProperty('width',widthMM+'mm','important');
+ ink.style.setProperty('height',heightMM+'mm','important');
+ ink.style.setProperty('left',((maxWidthMM-widthMM)/2)+'mm','important');
+}
 function renderSignatureBlock(signatureText){
  const target=el('signature');if(!target)return;
  target.replaceChildren();
@@ -913,7 +925,10 @@ function renderSignatureBlock(signatureText){
   const signingArea=document.createElement('div');
   signingArea.className='signature-signing-area';
   const ink=document.createElement('img');ink.className='signature-handwriting';
-  ink.alt='Assinatura manuscrita do signatário';ink.src=handwrittenSignature;
+  ink.alt='Assinatura manuscrita do signatário';
+  ink.addEventListener('load',()=>fitSignatureInkElement(ink),{once:true});
+  ink.src=handwrittenSignature;
+  if(ink.complete&&ink.naturalWidth)fitSignatureInkElement(ink);
   const line=document.createElement('div');line.className='signature-signing-line';
   signingArea.append(ink,line);target.appendChild(signingArea);
  }
@@ -1110,6 +1125,11 @@ async function createDocumentPdf(){
  const paginationError=el('validation').textContent;
  if(paginationError.startsWith('Não foi possível paginar'))throw Error(paginationError);
  const originals=allPaperPages();
+ // Aplicar as mesmas dimensões explícitas à imagem antes de clonar para o PDF.
+ await Promise.all(originals.flatMap(p=>[...p.querySelectorAll('.signature-handwriting')]).map(async ink=>{
+  if(!ink.complete||!ink.naturalWidth)await ink.decode();
+  fitSignatureInkElement(ink);
+ }));
  const holder=document.createElement('div');holder.style.cssText='position:fixed;left:-5000px;top:0;width:210mm;background:white;z-index:-1';
  const copies=originals.map(page=>{
   const copy=page.cloneNode(true);copy.removeAttribute('id');copy.classList.remove('paper-editing');
@@ -1269,7 +1289,7 @@ function exportSignInk(){
   if(rgba[(y*w+x)*4+3]>10){minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y)}
  }
  if(maxX<minX)return null;
- const padding=8;
+ const padding=16;
  const x0=Math.max(0,minX-padding),y0=Math.max(0,minY-padding);
  const x1=Math.min(w,maxX+padding+1),y1=Math.min(h,maxY+padding+1);
  const trimmed=document.createElement('canvas');
