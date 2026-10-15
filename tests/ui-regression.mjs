@@ -31,6 +31,7 @@ async function getA4Geometry(page){
  return await page.evaluate(()=>{
   paginateDocument();
   const pages=[...document.querySelectorAll('#preview-frame > article.paper')];
+  document.getElementById('preview-frame').classList.remove('preview-scaled');
   pages.forEach(p=>p.style.zoom='1');
   const round=n=>Math.round(n*10)/10;
   function dims(el,parent){
