@@ -21,7 +21,8 @@ async function measure(page){
  return await page.evaluate(()=>{
    paginateDocument();
    const pages=[...document.querySelectorAll('#preview-frame > article.paper')];
-   return {msg:document.getElementById('validation').textContent,count:pages.length,pages:pages.map((p,i)=>{
+   pages.forEach(p=>p.style.zoom='1');
+   const observed={msg:document.getElementById('validation').textContent,count:pages.length,pages:pages.map((p,i)=>{
      const r=p.getBoundingClientRect();
      const stop=r.bottom-parseFloat(getComputedStyle(p).paddingBottom);
      const txt=[...p.querySelectorAll('.relato-paragraph')];
@@ -39,6 +40,8 @@ async function measure(page){
        bodyMargin:p.querySelector('.body')?getComputedStyle(p.querySelector('.body')).marginTop:''
      };
    })};
+   fitPaper();
+   return observed;
  });
 }
 function verify(m,raw,name){
