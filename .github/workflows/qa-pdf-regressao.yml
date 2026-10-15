@@ -2,6 +2,8 @@ name: QA PDF - ambiente isolado
 on:
   push:
     branches: ["qa/testes-pdf-regressao-20261015"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 jobs:
   regressao:
