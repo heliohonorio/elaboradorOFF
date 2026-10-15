@@ -29,6 +29,7 @@ jobs:
           node tests/pdf-regression.mjs
           node tests/ui-regression.mjs
           node tests/preview-visual.mjs
+          node tests/signature-regression.mjs
       - name: Salvar evidências
         if: always()
         uses: actions/upload-artifact@v4
