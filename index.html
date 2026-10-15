@@ -849,7 +849,7 @@ function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.
   lines.push(heading+': '+values.map((value,index)=>value+(index===values.length-1?'.':';')).join('\\n       '));
  }else lines.push(heading+': '+values[0]+'.');
 }
-el('crest-unit-email').textContent=v('emailUnidade')?institutionalEmail(v('emailUnidade')):'';fitInstitutionalEmail();setMetaLines(lines);el('meta').style.whiteSpace='pre-line';renderRelato(v('relato')||'O relato aparecerá aqui.');renderSignatureBlock(signatureOverride!==null?signatureOverride:(v('nome')||'NOME DO SIGNATÁRIO').toUpperCase()+'\n'+(v('grad')||'POSTO / GRADUAÇÃO')+(v('re')?' RE '+v('re'):''));requestAnimationFrame(checkPage)}function allPaperPages(){return [...document.querySelectorAll('#preview-frame > article.paper')]}
+el('crest-unit-email').textContent=v('emailUnidade')?institutionalEmail(v('emailUnidade')):'';fitInstitutionalEmail();setMetaLines(lines);el('meta').style.whiteSpace='pre-line';renderRelato(v('relato')||'O relato aparecerá aqui.');renderSignatureBlock(signatureOverride!==null?signatureOverride:(v('nome')||'NOME DO SIGNATÁRIO').toUpperCase()+'\n'+(v('grad')||'POSTO / GRADUAÇÃO')+(v('re')?' '+v('re'):''));requestAnimationFrame(checkPage)}function allPaperPages(){return [...document.querySelectorAll('#preview-frame > article.paper')]}
 let paginationPending=false;
 function checkPage(){
  if(paginationPending)return;
