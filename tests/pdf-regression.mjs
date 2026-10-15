@@ -14,7 +14,9 @@ const scenarios=[
  {name:'dez-itens',text:Array.from({length:10},(_,i)=>(i+1)+'. '+(sentence+' ').repeat(3)).join('\n'),max:5},
  {name:'vinte-itens',text:Array.from({length:20},(_,i)=>(i+1)+'. '+(sentence+' ').repeat(5)).join('\n'),max:11},
  {name:'paragrafo-grande',text:'1. '+(sentence+' ').repeat(40)+'\n2. Encerramento do relato, preservando a assinatura.',max:9},
- {name:'com-linhas-vazias',text:Array.from({length:12},(_,i)=>(i+1)+'. '+sentence).join('\n\n'),max:5}
+ {name:'com-linhas-vazias',text:Array.from({length:12},(_,i)=>(i+1)+'. '+sentence).join('\n\n'),max:5},
+ {name:'lista-enumerada-longa',text:Array.from({length:10},(_,i)=>(i+1)+'. '+(sentence+' ').repeat(i+2)).join('\n'),max:8},
+ {name:'uma-palavra-extensa',text:'1. '+sentence+'\n2. '+'comprovante'.repeat(70)+'\n3. '+sentence,max:5}
 ];
 const normalize=s=>(s.match(/\S+/g)||[]).join(' ');
 async function measure(page){
@@ -117,7 +119,21 @@ async function run(engine,device,deviceName){
     const after=await measure(page);
     assert.ok(after.pages.at(-1).sign&&after.pages.at(-1).fragments>0);
   });
+  if(engine==='chromium')await check('impressao-A4',async()=>{
+    await page.emulateMedia({media:'print'});
+    try{
+      const preview=await measure(page);
+      const bytes=await page.pdf({preferCSSPageSize:true,printBackground:true});
+      const pdf=await PDFDocument.load(bytes);
+      assert.equal(pdf.getPageCount(),preview.count,'Impressão A4 adicionou ou omitiu folhas');
+      assert.ok(bytes.length>10000,'Impressão sem conteúdo');
+      await writeFile(out+'/'+engine+'-'+deviceName+'-impresso.pdf',bytes);
+      return {pages:pdf.getPageCount()};
+    }finally{await page.emulateMedia({media:'screen'})}
+  });
   await check('pdf-compartilhado-real',async()=>{
+    await page.locator('#preview-toggle').click();
+    assert.equal(await page.locator('#preview-toggle').innerText(),'Visualizar A4');
     const preview=await measure(page);
     await page.addScriptTag({path:resolve('node_modules/jspdf/dist/jspdf.umd.min.js')});
     await page.addScriptTag({path:resolve('node_modules/html2canvas/dist/html2canvas.min.js')});
@@ -131,9 +147,12 @@ async function run(engine,device,deviceName){
     assert.equal(pdf.getPageCount(),preview.count,'PDF e prévia divergem em número de folhas');
     assert.ok(bytes.length>20000,'PDF vazio');
     await writeFile(out+'/'+engine+'-'+deviceName+'-exportado.pdf',bytes);
+    await page.locator('#preview-toggle').click();
     return {pages:pdf.getPageCount(),size:bytes.length};
   });
-  if(jsErrors.length)issues.push({name:prefix+'/erros-JS',error:jsErrors.join('; ')});
+  const criticalErrors=jsErrors.filter(x=>!(/contador-visitas|access control checks|supabase\.co/.test(x)));
+  if(criticalErrors.length)issues.push({name:prefix+'/erros-JS',error:criticalErrors.join('; ')});
+  if(jsErrors.length)console.log('AVISOS JS em ambiente file://:',jsErrors);
  }catch(e){issues.push({name:prefix+'/inicialização',error:e.stack||String(e)})}
  finally{await browser.close()}
 }
