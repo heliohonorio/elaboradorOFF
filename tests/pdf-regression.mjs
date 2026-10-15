@@ -119,18 +119,6 @@ async function run(engine,device,deviceName){
     const after=await measure(page);
     assert.ok(after.pages.at(-1).sign&&after.pages.at(-1).fragments>0);
   });
-  if(engine==='chromium')await check('impressao-A4',async()=>{
-    await page.emulateMedia({media:'print'});
-    try{
-      const preview=await measure(page);
-      const bytes=await page.pdf({preferCSSPageSize:true,printBackground:true});
-      const pdf=await PDFDocument.load(bytes);
-      assert.equal(pdf.getPageCount(),preview.count,'Impressão A4 adicionou ou omitiu folhas');
-      assert.ok(bytes.length>10000,'Impressão sem conteúdo');
-      await writeFile(out+'/'+engine+'-'+deviceName+'-impresso.pdf',bytes);
-      return {pages:pdf.getPageCount()};
-    }finally{await page.emulateMedia({media:'screen'})}
-  });
   await check('pdf-compartilhado-real',async()=>{
     await page.locator('#preview-toggle').click();
     assert.equal(await page.locator('#preview-toggle').innerText(),'Visualizar A4');
@@ -149,6 +137,18 @@ async function run(engine,device,deviceName){
     await writeFile(out+'/'+engine+'-'+deviceName+'-exportado.pdf',bytes);
     await page.locator('#preview-toggle').click();
     return {pages:pdf.getPageCount(),size:bytes.length};
+  });
+  if(engine==='chromium')await check('impressao-A4',async()=>{
+    await page.emulateMedia({media:'print'});
+    try{
+      const preview=await measure(page);
+      const bytes=await page.pdf({preferCSSPageSize:true,printBackground:true});
+      const pdf=await PDFDocument.load(bytes);
+      assert.equal(pdf.getPageCount(),preview.count,'Impressão A4 adicionou ou omitiu folhas');
+      assert.ok(bytes.length>10000,'Impressão sem conteúdo');
+      await writeFile(out+'/'+engine+'-'+deviceName+'-impresso.pdf',bytes);
+      return {pages:pdf.getPageCount()};
+    }finally{await page.emulateMedia({media:'screen'})}
   });
   const criticalErrors=jsErrors.filter(x=>!(/contador-visitas|access control checks|supabase\.co/.test(x)));
   if(criticalErrors.length)issues.push({name:prefix+'/erros-JS',error:criticalErrors.join('; ')});
