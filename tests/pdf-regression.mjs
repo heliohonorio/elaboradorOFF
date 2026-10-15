@@ -23,6 +23,7 @@ async function measure(page){
  return await page.evaluate(()=>{
    paginateDocument();
    const pages=[...document.querySelectorAll('#preview-frame > article.paper')];
+   document.getElementById('preview-frame').classList.remove('preview-scaled');
    pages.forEach(p=>p.style.zoom='1');
    const observed={msg:document.getElementById('validation').textContent,count:pages.length,pages:pages.map((p,i)=>{
      const r=p.getBoundingClientRect();
