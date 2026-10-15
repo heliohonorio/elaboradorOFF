@@ -120,6 +120,8 @@ async function run(engine,device,deviceName){
     assert.ok(after.pages.at(-1).sign&&after.pages.at(-1).fragments>0);
   });
   await check('pdf-compartilhado-real',async()=>{
+    await page.evaluate(t=>{const node=document.getElementById('relato');node.value=t;node.dispatchEvent(new Event('input',{bubbles:true}))},scenarios[1].text);
+    await wait(230);
     await page.locator('#preview-toggle').click();
     assert.equal(await page.locator('#preview-toggle').innerText(),'Visualizar A4');
     const preview=await measure(page);
@@ -139,6 +141,8 @@ async function run(engine,device,deviceName){
     return {pages:pdf.getPageCount(),size:bytes.length};
   });
   if(engine==='chromium')await check('impressao-A4',async()=>{
+    await page.evaluate(t=>{const node=document.getElementById('relato');node.value=t;node.dispatchEvent(new Event('input',{bubbles:true}))},scenarios[2].text);
+    await wait(240);
     await page.emulateMedia({media:'print'});
     try{
       const preview=await measure(page);
