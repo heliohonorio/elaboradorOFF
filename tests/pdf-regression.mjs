@@ -9,9 +9,11 @@ const out='qa-output', issues=[], results=[];
 await mkdir(out,{recursive:true});
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const sentence='Solicito a análise da presente manifestação administrativa, considerando a distribuição correta das palavras, o alinhamento institucional e as margens obrigatórias de todas as folhas.';
+const fourteenItems=Array.from({length:14},(_,i)=>(i+1)+'. '+(sentence+' ').repeat([2,2,3,2,3,3,2,3,2,3,2,3,2,3][i])).join('\n');
 const scenarios=[
  {name:'curto',text:'1. Solicito o registro do presente documento de teste.',max:1},
  {name:'dez-itens',text:Array.from({length:10},(_,i)=>(i+1)+'. '+(sentence+' ').repeat(3)).join('\n'),max:5},
+ {name:'quatorze-itens-safari',text:fourteenItems,max:6},
  {name:'vinte-itens',text:Array.from({length:20},(_,i)=>(i+1)+'. '+(sentence+' ').repeat(5)).join('\n'),max:11},
  {name:'paragrafo-grande',text:'1. '+(sentence+' ').repeat(40)+'\n2. Encerramento do relato, preservando a assinatura.',max:9},
  {name:'com-linhas-vazias',text:Array.from({length:12},(_,i)=>(i+1)+'. '+sentence).join('\n\n'),max:5},
@@ -39,6 +41,7 @@ async function measure(page){
        motto:!!motto&&getComputedStyle(motto).display!=='none',
        overflow: [...txt,sig].filter(Boolean).some(n=>n.getBoundingClientRect().bottom>stop+2),
        font:txt[0]?getComputedStyle(txt[0]).fontSize:'',
+       fontAdjusts:txt.map(x=>getComputedStyle(x).webkitTextSizeAdjust||getComputedStyle(x).textSizeAdjust),
        firstIndent:txt[0]?getComputedStyle(txt[0]).textIndent:'',
        bodyMargin:p.querySelector('.body')?getComputedStyle(p.querySelector('.body')).marginTop:''
      };
@@ -57,6 +60,7 @@ function verify(m,raw,name){
  assert.equal(m.pages.filter(p=>p.motto).length,1,name+' lema duplicado');
  assert.ok(m.pages.every(p=>!p.overflow),name+' texto ou assinatura ultrapassa a margem inferior: '+JSON.stringify(m.pages.map(p=>({n:p.num,blank:Math.round(p.blank||0),textEnd:p.textEnd,signEnd:p.signEnd,stop:p.stop,sign:p.sign}))));
  assert.ok(m.pages.every(p=>p.font==='16px'),name+' perdeu Times New Roman 12pt');
+ assert.ok(m.pages.every(p=>p.fontAdjusts.every(v=>v==='100%')),name+' ajuste automático do texto Safari pode distorcer letras e paginação');
  const excess=m.pages.slice(0,-1).filter(p=>p.blank>190);
  assert.ok(!excess.length,name+' quebra precoce '+JSON.stringify(excess.map(p=>({n:p.num,blank:Math.round(p.blank)}))));
 }
