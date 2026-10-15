@@ -528,6 +528,11 @@ html,body{min-height:100%}body{min-height:100dvh}.app{min-height:100dvh;display:
  padding:0!important;border:0!important;overflow:hidden!important;
  visibility:hidden!important;pointer-events:none!important;
 }
+/* Os trechos que continuam um parágrafo em outra folha devem começar
+   na margem normal também quando clonados fora da prévia para o PDF. */
+.paper.paper-continuation .body .relato-paragraph.relato-continuation{
+ text-indent:0!important;
+}
 /* As páginas clonadas para o PDF ficam fora de #preview-frame:
    preservar os mesmos espaçamentos das folhas de continuação. */
 .paper.paper-continuation>.body{
