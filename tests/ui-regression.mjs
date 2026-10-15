@@ -104,19 +104,39 @@ async function test(engine,device,deviceName){
    for(const id of ['ai','restore','clear','print','share','preview-toggle','sign-open','edit-paper']){
     assert.equal(await page.locator('#'+id).count(),1,'botão sem identificador único: '+id);
    }
-   assert.equal(await page.locator('.form .document-actions .action-group').count(),3,'agrupamento incorreto');
+
+   assert.equal(await page.locator('.form .document-actions .pdf-actions').count(),1,'ações do PDF não estão juntas');
+   assert.equal(await page.locator('.form .document-actions .ai-actions').count(),1,'ferramenta de IA ausente');
+   assert.equal(await page.locator('.form .document-actions .action-group-title').count(),0,'há títulos redundantes');
    assert.equal(await page.locator('.doc-head .preview-toolbar > button').count(),3,'controles A4 não estão agrupados');
    assert.equal(await page.locator('#share').innerText(),'Compartilhar PDF');
-   assert.equal(await page.locator('#clear').innerText(),'Limpar campos');
-   assert.ok((await page.locator('#print').innerText()).includes('PDF'));
+   assert.equal(await page.locator('#clear').innerText(),'Limpar formulário');
+   assert.equal(await page.locator('#print').innerText(),'Salvar ou imprimir PDF');
+   assert.equal(await page.locator('#edit-paper').innerText(),'Editar');
    const order=await page.locator('.form .document-actions button').evaluateAll(ns=>ns.map(n=>n.id));
    assert.deepEqual(order,['ai','restore','print','share','clear'],'ordem das ações inconsistente');
-   for(const id of ['print','share','clear']){
-    const box=await page.locator('#'+id).boundingBox();assert.ok(box&&box.height>=36,'alvo de toque muito pequeno: '+id);
+   for(const id of ['print','share','clear','preview-toggle','sign-open','edit-paper']){
+    const box=await page.locator('#'+id).boundingBox();
+    assert.ok(box&&box.height>=42,'alvo de toque muito pequeno: '+id);
+    const size=await page.locator('#'+id).evaluate(n=>parseFloat(getComputedStyle(n).fontSize));
+    assert.ok(size>=14,'texto do botão pequeno: '+id);
    }
+   assert.ok(await page.locator('.form .document-actions .ai-actions').isHidden(),'IA aparece fora da etapa de elaboração');
+   assert.ok(await page.locator('.form > #progress').isHidden(),'contador de etapas redundante aparece na tela');
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
    assert.ok(overflow<=1,'interface cria barra horizontal: '+overflow);
    await page.screenshot({path:out+'/'+engine+'-'+deviceName+'-botoes.png',fullPage:true});
+  });
+  await run('etapas-intuitivas',async()=>{
+   assert.ok((await page.locator('.stage-tab.active').innerText()).includes('Identificação'));
+   await page.locator('#next-step').click();
+   assert.ok((await page.locator('.stage-tab.active').innerText()).includes('Destinatário'));
+   await page.locator('#next-step').click();
+   assert.ok((await page.locator('.stage-tab.active').innerText()).includes('Elaboração'));
+   assert.ok(await page.locator('.form .document-actions .ai-actions').isVisible(),'IA não aparece na etapa de elaboração');
+   assert.ok(await page.locator('#ai').isVisible(),'botão de IA indisponível');
+   const after=await getA4Geometry(page);
+   match(baseline,after,prefix+'/após etapas');
   });
   await run('previsualizacao-e-edicao',async()=>{
    await page.locator('#preview-toggle').click();
