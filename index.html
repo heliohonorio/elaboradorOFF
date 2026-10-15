@@ -882,14 +882,19 @@ function checkPage(){
 function paginateDocument(){
  const first=el('paper'),frame=el('preview-frame'),body=el('body'),sig=el('signature');
  if(!first||!frame||!body||!sig)return;
- // Guardar o lema antes de remover páginas antigas (pode estar na última).
+ // Reconstituir o relato integral antes de remover as folhas anteriores.
+ // Assim, chamadas sucessivas (prévia, impressão e compartilhamento)
+ // nunca repaginam apenas os fragmentos deixados na primeira folha.
+ renderRelato(el('relato').value.trim()||'O relato aparecerá aqui.');
  const motto=frame.querySelector('.motto');
  if(!motto)return;
+ const blocks=[...body.children].map(node=>node.cloneNode(true));
+ // A medida do conteúdo deve ser feita sempre em A4 real: o zoom
+ // aplicado à prévia no celular é exclusivamente visual. No iOS,
+ // medir retângulos com zoom fracionário antecipa as quebras de página.
+ first.style.zoom='1';
  allPaperPages().slice(1).forEach(p=>p.remove());
- const blocks=[...body.children].map(n=>n.cloneNode(true));
  body.replaceChildren();
- // Retirar a assinatura temporariamente para medir os parágrafos;
- // preservar seus elementos (inclusive a imagem) em vez de apagar o conteúdo.
  sig.remove();
  first.classList.remove('paper-last');
  first.classList.add('paper-first');
@@ -898,22 +903,30 @@ function paginateDocument(){
   if(pages.length>=40)throw Error('Limite de 40 páginas atingido.');
   const next=document.createElement('article');
   next.className='paper paper-continuation';
-  next.style.zoom=first.style.zoom||'1';
+  next.style.zoom='1';
   const b=document.createElement('div');b.className='body';next.appendChild(b);
   frame.appendChild(next);pages.push(next);page=next;container=b;
  }
  function limit(){
-  // Comparar o texto e a folha na mesma escala visual (inclusive no iOS).
-  // O conteúdo deve terminar acima da margem inferior de 17 mm do A4.
+  // Coordenadas e medidas na mesma escala (100%), inclusive no Safari/iOS.
   const rect=page.getBoundingClientRect();
-  return rect.top+rect.height*(280/297);
+  return rect.bottom-parseFloat(getComputedStyle(page).paddingBottom);
  }
  function fits(node){return node.getBoundingClientRect().bottom<=limit()+.5}
- function addBlock(original){
+ function signatureFits(){
+  // A assinatura precisa caber junto da última linha do relato.
+  page.appendChild(sig);
+  const ok=fits(sig);
+  sig.remove();
+  return ok;
+ }
+ function addBlock(original,isLast){
   const block=original.cloneNode(true);container.appendChild(block);
-  if(fits(block))return;
+  if(fits(block)&&(!isLast||signatureFits()))return;
   block.remove();
-  if(original.classList.contains('paragraph-gap')){newPage();return}
+  if(original.classList.contains('paragraph-gap')){
+   newPage();return;
+  }
   const tokens=(original.textContent||'').match(/\S+\s*/g)||[];
   if(!tokens.length)return;
   let remaining=tokens.slice(),continued=false;
@@ -925,12 +938,17 @@ function paginateDocument(){
    while(low<=high){
     const mid=(low+high)>>1;
     fragment.textContent=remaining.slice(0,mid).join('').trimEnd();
-    if(fits(fragment)){best=mid;low=mid+1}else high=mid-1;
+    // Reservar espaço para a assinatura ao testar o último trecho.
+    // Se não couber, pelo menos uma linha do relato seguirá com ela.
+    const complete=isLast&&mid===remaining.length;
+    if(fits(fragment)&&(!complete||signatureFits())){
+     best=mid;low=mid+1;
+    }else high=mid-1;
    }
    if(best===0){
     fragment.remove();
     if(container.children.length){newPage();continued=true;continue}
-    // Um bloco isolado maior que a folha: preservar texto e avançar.
+    // Um único bloco excepcionalmente maior que a área útil.
     best=1;container.appendChild(fragment);
    }
    fragment.textContent=remaining.slice(0,best).join('').trimEnd();
@@ -939,19 +957,22 @@ function paginateDocument(){
   }
  }
  try{
-  for(const block of blocks)addBlock(block);
-  // A assinatura deve permanecer no DOM original, na última página.
+  for(let i=0;i<blocks.length;i++)addBlock(blocks[i],i===blocks.length-1);
+  // Nunca criar uma página apenas para a assinatura.
+  // A última folha já deve conter a última linha do relato.
   page.appendChild(sig);
-  if(!fits(sig)){sig.remove();newPage();page.appendChild(sig)}
+  if(!fits(sig))throw Error('A assinatura não coube junto à última linha do relato.');
   page.appendChild(motto);
   pages.forEach((p,i)=>p.classList.toggle('paper-last',i===pages.length-1));
   el('docstatus').textContent='A4 · '+pages.length+(pages.length===1?' página':' páginas');
   el('validation').textContent='Documento distribuído em '+pages.length+(pages.length===1?' página A4.':' páginas A4.')+' Confira a prévia antes de salvar.';
   el('validation').style.color='';
-  fitPaper();
  }catch(error){
   el('validation').textContent='Não foi possível paginar: '+error.message;
   el('validation').style.color='#ffaaa0';
+ }finally{
+  // Apenas a exibição da prévia volta à escala da tela.
+  fitPaper();
  }
 }
 /* Padronização do nome do município sem interferir na digitação. */
