@@ -28,6 +28,7 @@ jobs:
         run: |
           node tests/pdf-regression.mjs
           node tests/ui-regression.mjs
+          node tests/preview-visual.mjs
       - name: Salvar evidências
         if: always()
         uses: actions/upload-artifact@v4
