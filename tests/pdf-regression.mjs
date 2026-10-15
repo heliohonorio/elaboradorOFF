@@ -78,6 +78,10 @@ async function run(engine,device,deviceName){
    for(const [k,v] of Object.entries(fields)){const node=document.getElementById(k);node.value=v;node.dispatchEvent(new Event('input',{bubbles:true}))}
   });
   await wait(250);
+  // O usuário acessa a saída PDF na última etapa, após preencher os dados.
+  await page.locator('#next-step').click();
+  await page.locator('#next-step').click();
+  if(!(await page.locator('#share').isVisible()))throw Error('Compartilhar PDF indisponível na última etapa');
   for(const sample of scenarios){
    await check(sample.name,async()=>{
      await page.evaluate(t=>{const node=document.getElementById('relato');node.value=t;node.dispatchEvent(new Event('input',{bubbles:true}))},sample.text);
@@ -93,13 +97,13 @@ async function run(engine,device,deviceName){
   }
   await check('ocultar-visualizar-A4',async()=>{
     const before=await measure(page);
+    const initial=await page.locator('#preview-toggle').getAttribute('aria-expanded');
     await page.locator('#preview-toggle').click();
-    assert.equal(await page.locator('#preview-toggle').innerText(),'Visualizar A4');
-    assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),'false');
-    const hidden=await measure(page);
-    verify(hidden,await page.locator('#relato').inputValue(),'A4 oculto');
+    assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),initial==='true'?'false':'true');
+    const toggled=await measure(page);
+    verify(toggled,await page.locator('#relato').inputValue(),'A4 alternado');
     await page.locator('#preview-toggle').click();
-    assert.equal(await page.locator('#preview-toggle').innerText(),'Ocultar A4');
+    assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),initial);
     assert.equal((await measure(page)).count,before.count);
   });
   await check('assinatura-sem-deslizar',async()=>{
@@ -122,8 +126,10 @@ async function run(engine,device,deviceName){
   await check('pdf-compartilhado-real',async()=>{
     await page.evaluate(t=>{const node=document.getElementById('relato');node.value=t;node.dispatchEvent(new Event('input',{bubbles:true}))},scenarios[1].text);
     await wait(230);
-    await page.locator('#preview-toggle').click();
-    assert.equal(await page.locator('#preview-toggle').innerText(),'Visualizar A4');
+    // Com a prévia ocultada, a exportação não deve perder nenhuma folha.
+    if((await page.locator('#preview-toggle').getAttribute('aria-expanded'))==='true')
+      await page.locator('#preview-toggle').click();
+    assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),'false');
     const preview=await measure(page);
     await page.addScriptTag({path:resolve('node_modules/jspdf/dist/jspdf.umd.min.js')});
     await page.addScriptTag({path:resolve('node_modules/html2canvas/dist/html2canvas.min.js')});
