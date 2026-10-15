@@ -74,11 +74,11 @@ function match(expected,actual,label){
    if(path.includes('.paragraphs[')&&path.endsWith('.dims.indent')
      && typeof a==='string'&&typeof b==='string'
      && parseFloat(a)>50&&Math.abs(parseFloat(b)/parseFloat(a)-1.5)<.02)return;
-   if(path.includes('.signature.dims.marginTop')
+   if(path.includes('.signature.marginTop')
      && a==='35px'&&Math.abs(parseFloat(b)-49.13)<1.2)return;
-   if(path.includes('.signature.dims.y')
+   if(path.includes('.signature.y')
      && typeof a==='number'&&typeof b==='number'&&Math.abs((b-a)-14.1)<2)return;
-   if(path.includes('.motto.dims.y')
+   if(path.includes('.motto.y')
      && typeof a==='number'&&typeof b==='number'&&Math.abs((b-a)-45.4)<2)return;
    if(a===null||b===null){assert.equal(a,b,path);return}
    if(typeof a==='number'&&typeof b==='number'){assert.ok(Math.abs(a-b)<1.1,path+': geometria A4 alterada '+a+' => '+b);return}
