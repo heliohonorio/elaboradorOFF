@@ -566,6 +566,8 @@ html,body{min-height:100%}body{min-height:100dvh}.app{min-height:100dvh;display:
 .form .document-actions .action-group-title{margin:0 0 10px;color:#e3e3e8;font-size:13px;font-weight:700;letter-spacing:.015em}
 .form .document-actions .action-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .form .document-actions .action-buttons>.btn{width:100%;min-width:0;min-height:48px;padding:11px 12px;font-size:13px;line-height:1.35;white-space:normal;text-align:center}
+.form .document-actions .action-group:has(#ai[hidden]){display:none}
+.form .document-actions:has(#ai[hidden])>.action-group:nth-child(2){padding-top:0;border-top:0}
 .form .document-actions .action-reset{display:flex;justify-content:flex-end}
 .form .document-actions #clear{flex:0 1 auto;min-height:40px;padding:8px 14px;background:transparent!important;border:1px solid #64646d!important;color:#ededf2!important}
 .doc-head .preview-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
