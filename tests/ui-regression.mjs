@@ -115,7 +115,7 @@ async function test(engine,device,deviceName){
    assert.equal(await page.locator('#edit-paper').innerText(),'Editar');
    const order=await page.locator('.form .document-actions button').evaluateAll(ns=>ns.map(n=>n.id));
    assert.deepEqual(order,['ai','restore','print','share','clear'],'ordem das ações inconsistente');
-   for(const id of ['print','share','clear','preview-toggle','sign-open','edit-paper']){
+   for(const id of ['clear','preview-toggle','sign-open','edit-paper']){
     const box=await page.locator('#'+id).boundingBox();
     assert.ok(box&&box.height>=42,'alvo de toque muito pequeno: '+id);
     const size=await page.locator('#'+id).evaluate(n=>parseFloat(getComputedStyle(n).fontSize));
@@ -123,6 +123,13 @@ async function test(engine,device,deviceName){
    }
    assert.ok(await page.locator('.form .document-actions .ai-actions').isHidden(),'IA aparece fora da etapa de elaboração');
    assert.ok(await page.locator('.form > #progress').isHidden(),'contador de etapas redundante aparece na tela');
+   assert.ok(await page.locator('#print').isHidden(),'Salvar PDF aparece antes de terminar as etapas');
+   assert.ok(await page.locator('#share').isHidden(),'Compartilhar aparece antes de terminar as etapas');
+   assert.ok(await page.locator('.intro').isHidden(),'Introdução repetida ocupa espaço no formulário');
+   if(deviceName!=='desktop'){
+    assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),'false','prévia mobile deve iniciar recolhida');
+    assert.equal(await page.locator('#preview-toggle').innerText(),'Visualizar A4');
+   }
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
    assert.ok(overflow<=1,'interface cria barra horizontal: '+overflow);
    await page.screenshot({path:out+'/'+engine+'-'+deviceName+'-botoes.png',fullPage:true});
@@ -135,15 +142,20 @@ async function test(engine,device,deviceName){
    assert.ok((await page.locator('.stage-tab.active').innerText()).includes('Elaboração'));
    assert.ok(await page.locator('.form .document-actions .ai-actions').isVisible(),'IA não aparece na etapa de elaboração');
    assert.ok(await page.locator('#ai').isVisible(),'botão de IA indisponível');
+   for(const id of ['print','share']){
+    assert.ok(await page.locator('#'+id).isVisible(),'botão não aparece ao concluir as etapas: '+id);
+    const box=await page.locator('#'+id).boundingBox();
+    assert.ok(box&&box.height>=42,'área de toque pequena após concluir: '+id);
+   }
    const after=await getA4Geometry(page);
    match(baseline,after,prefix+'/após etapas');
   });
   await run('previsualizacao-e-edicao',async()=>{
+   const initial=await page.locator('#preview-toggle').getAttribute('aria-expanded');
    await page.locator('#preview-toggle').click();
-   assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),'false');
-   assert.equal(await page.locator('#preview-toggle').innerText(),'Visualizar A4');
+   assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),initial==='true'?'false':'true');
    await page.locator('#preview-toggle').click();
-   assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),'true');
+   assert.equal(await page.locator('#preview-toggle').getAttribute('aria-expanded'),initial);
    await page.locator('#edit-paper').click();
    assert.equal(await page.locator('#edit-paper').getAttribute('aria-pressed'),'true');
    await page.locator('#edit-paper').click();
