@@ -1,0 +1,30 @@
+name: Testes de navegacao da tela inicial
+on:
+  push:
+    branches:
+      - melhoria-selecao-documentos-20261016
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Obter codigo
+        uses: actions/checkout@v4
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar browsers de teste
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Validar navegacao e formularios
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/elaboradoroff-server.log 2>&1 &
+          sleep 3
+          node tests/start-flow.mjs
