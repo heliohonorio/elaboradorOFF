@@ -14,6 +14,7 @@ for(const scenario of [
  try{
   await page.goto('file://'+resolve('index.html'),{waitUntil:'domcontentloaded'});
   await page.locator('#start-create').click();
+  await page.locator('.type-option[data-document-type="parte"]').click();
   await page.evaluate(()=>{
    showStage(2);
    const relato=document.getElementById('relato');
