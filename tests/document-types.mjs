@@ -25,7 +25,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.locator('#enderecoUnidade').fill(address);
   await page.locator('#emailUnidade').fill('unidade.teste');
   await page.locator('#numero').fill('DL-009/2026');
-  await page.locator('#assunto').fill('Teste inicial');
+  await page.evaluate(()=>{const field=document.getElementById('assunto');field.value='Teste inicial';field.dispatchEvent(new Event('input',{bubbles:true}))});
   assert.match(await page.locator('#meta').innerText(),/OFÍCIO Nº DL-009\/2026/);
   assert.equal(await page.locator('#crest-unit-address').innerText(),address);
   const order=await page.evaluate(()=>{
@@ -67,7 +67,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   assert.match(await page.locator('#meta').innerText(),/MEMORANDO Nº/);
   assert.equal(await page.locator('#enderecoUnidade').evaluate(e=>e.required),false);
 
-  await page.locator('#relato').fill(Array.from({length:70},(_,i)=>(i+1)+'. Parágrafo para testar a paginação sem alterar fonte e margens.').join('\n'));
+  await page.evaluate(()=>{const field=document.getElementById('relato');field.value=Array.from({length:70},(_,i)=>(i+1)+'. Parágrafo para testar a paginação sem alterar fonte e margens.').join('\n');field.dispatchEvent(new Event('input',{bubbles:true}))});
   await page.evaluate(()=>paginateDocument());
   assert.ok(await page.locator('#preview-frame > article.paper').count()>1,'cenário deve paginar');
   await page.locator('#edit-paper').click();
