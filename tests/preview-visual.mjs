@@ -17,6 +17,7 @@ for (const item of [
  try{
   await page.goto('file://'+resolve('index.html'),{waitUntil:'domcontentloaded'});
   await page.locator('#start-create').click();
+  await page.locator('.type-option[data-document-type="parte"]').click();
   await page.evaluate(()=>{document.querySelector('#emailUnidade').value='cpam1'});
   await page.evaluate(()=>{document.querySelector('#emailUnidade').dispatchEvent(new Event('input',{bubbles:true}))});
   if((await page.locator('#preview-toggle').getAttribute('aria-expanded'))==='false')
