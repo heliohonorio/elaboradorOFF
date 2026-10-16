@@ -680,8 +680,8 @@ function openEditor(mode){
  requiredFields.forEach(id=>{el(id).required=mode!=='import';el(id).classList.remove('field-invalid')});
  el('enderecoUnidade').required=currentDocumentType==='oficio'&&mode!=='import';
  el('start-screen').hidden=true;el('editor-back').hidden=false;el('editor-layout').hidden=false;
- el('editor-mode').textContent=mode==='import'?'Editando documento importado':'Criando novo documento';
- document.querySelector('.intro h1').textContent=mode==='import'?'Edite seu documento.':'Elabore sua parte com facilidade.';
+ el('editor-mode').textContent=mode==='import'?'Editando documento importado':'Criando '+documentTypeLabel().toLocaleLowerCase('pt-BR');
+ document.querySelector('.intro h1').textContent=mode==='import'?'Edite seu documento.':'Elabore seu documento com facilidade.';
  showStage(0);render();requestAnimationFrame(fitPaper);window.scrollTo({top:0,behavior:'smooth'});
 }
 el('start-create').onclick=()=>openEditor('create');
@@ -814,6 +814,7 @@ function interpretImportedText(text){
  const values={};const recognized=new Set();
  const find=(regex)=>{for(let i=0;i<lines.length;i++){const m=lines[i].match(regex);if(m){recognized.add(i);return m[1]?.trim()||''}}return ''};
  const clean=v=>v.replace(/^[:\s–-]+/,'').trim();
+ values.documentType=/(?:^|\n)\s*OF[IÍ]CIO\s*N[º°o]/im.test(text)?'oficio':/(?:^|\n)\s*MEMORANDO\s*N[º°o]/im.test(text)?'memorando':'parte';
  values.numero=clean(find(/^(?:PARTE|OF[IÍ]CIO|MEMORANDO)\s*(?:N[º°o.]*)?\s*[:\-]?\s*(.+)$/i));
  values.destinatario=clean(find(/^Ao\s+(.+)$/i));
  values.assunto=clean(find(/^Assunto\s*:\s*(.+)$/i));
@@ -867,7 +868,7 @@ el('import-confirm').onclick=()=>{
  for(const [id,value] of Object.entries(pendingImport.values)){if(ids.includes(id))el(id).value=value}
  if(!el('relato').value.trim()){el('relato').value=pendingImport.raw;el('import-status').textContent='O texto completo foi colocado no relato porque o corpo não pôde ser identificado com segurança.'}
  document.querySelectorAll('.field-wrap').forEach(w=>{const input=w.querySelector('input,textarea'),clear=w.querySelector('.field-clear');if(input&&clear)clear.hidden=!input.value});
- hideImportProgress();openEditor('import');el('ai-status').textContent='Documento importado. Confira e complete os campos antes de salvar. Dados não reconhecidos foram deixados em branco.';
+ el('document-type').value=pendingImport.values.documentType||'parte';metaOverride=null;hideImportProgress();openEditor('import');el('ai-status').textContent='Documento importado. Confira e complete os campos antes de salvar. Dados não reconhecidos foram deixados em branco.';
 };
 
 function filled(id){const v=el(id).value.trim();return id==='email'||(id==='re'?/^\d{6}-\d$/.test(v):v.length>0)}function updateDocumentTitle(){
@@ -930,10 +931,17 @@ function setMetaLines(lines){
   }
  });
 }
-function renderExtrasOnly(){
+function buildDocumentLines(v,date){return [
+ (normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.',
+ documentTypeLabel().toLocaleUpperCase('pt-BR')+' Nº '+(v('numero')||'—'),
+ 'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),
+ formatMetaFinal('Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao ')),
+ formatMetaFinal('Assunto: '+(v('assunto')||'—'))
+]}
+function renderExtrasOnly(){metaOverride=null;
  const v=id=>el(id).value.trim();
  const date=v('data')?new Date(v('data')+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'—';
- const lines=[(normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.','PARTE Nº '+(v('numero')||'—'),'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),formatMetaFinal('Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao ')),formatMetaFinal('Assunto: '+(v('assunto')||'—'))];
+ const lines=buildDocumentLines(v,date);
  for(const [id,label] of [['referencia','Referência'],['anexo','Anexo'],['interessado','Interessado'],['outro','Outro']]){
   if(!el('check-'+id)?.checked)continue;
   const values=[el('extra-'+id),...el('more-'+id).querySelectorAll('input')].map(input=>input.value.trim().replace(/[.;\\s]+$/,'')).filter(Boolean);
@@ -976,7 +984,7 @@ function renderSignatureBlock(signatureText){
  label.textContent=signatureText;target.appendChild(label);
  target.style.whiteSpace='pre-line';
 }
-function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.parentElement!==first)first.appendChild(sig);const motto=document.querySelector('#preview-frame .motto');if(motto&&motto.parentElement!==first)first.appendChild(motto);allPaperPages().slice(1).forEach(p=>p.remove());updateDocumentTitle();const v=id=>el(id).value.trim();const date=v('data')?new Date(v('data')+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'—';const lines=[(normalizeMunicipality(v('cidade'))||'Município')+', '+date+'.','PARTE Nº '+(v('numero')||'—'),'Do '+(v('grad')||'—')+' '+(v('guerra')?titleCaseWarName(v('guerra')):'—'),formatMetaFinal('Ao '+(v('destinatario')||'—').replace(/^Ao Ao /,'Ao ')),formatMetaFinal('Assunto: '+(v('assunto')||'—'))];for(const [id,label] of [['referencia','Referência'],['anexo','Anexo'],['interessado','Interessado'],['outro','Outro']]){
+function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.parentElement!==first)first.appendChild(sig);const motto=document.querySelector('#preview-frame .motto');if(motto&&motto.parentElement!==first)first.appendChild(motto);allPaperPages().slice(1).forEach(p=>p.remove());updateDocumentTitle();const v=id=>el(id).value.trim();const date=v('data')?new Date(v('data')+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'—';const lines=buildDocumentLines(v,date);for(const [id,label] of [['referencia','Referência'],['anexo','Anexo'],['interessado','Interessado'],['outro','Outro']]){
  if(!el('check-'+id)?.checked)continue;
  const values=[el('extra-'+id),...el('more-'+id).querySelectorAll('input')].map(input=>input.value.trim().replace(/[.;\\s]+$/,'')).filter(Boolean);
  if(!values.length)values.push('—');
@@ -987,7 +995,10 @@ function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.
   lines.push(heading+': '+values.map((value,index)=>value+(index===values.length-1?'.':';')).join('\\n       '));
  }else lines.push(heading+': '+values[0]+'.');
 }
-el('crest-unit-email').textContent=v('emailUnidade')?institutionalEmail(v('emailUnidade')):'';fitInstitutionalEmail();setMetaLines(lines);el('meta').style.whiteSpace='pre-line';renderRelato(v('relato')||'O relato aparecerá aqui.');renderSignatureBlock(signatureOverride!==null?signatureOverride:(v('nome')||'NOME DO SIGNATÁRIO').toUpperCase()+'\n'+(v('grad')||'POSTO / GRADUAÇÃO')+(v('re')?' '+v('re'):''));requestAnimationFrame(checkPage)}function allPaperPages(){return [...document.querySelectorAll('#preview-frame > article.paper')]}
+el('crest-unit-email').textContent=v('emailUnidade')?institutionalEmail(v('emailUnidade')):'';
+ const address=el('crest-unit-address');address.hidden=currentDocumentType!=='oficio';address.textContent=currentDocumentType==='oficio'?v('enderecoUnidade'):'';
+ el('paper').classList.toggle('is-oficio',currentDocumentType==='oficio');
+ fitInstitutionalEmail();setMetaLines(metaOverride??lines);el('meta').style.whiteSpace='pre-line';renderRelato(v('relato')||'O relato aparecerá aqui.');renderSignatureBlock(signatureOverride!==null?signatureOverride:(v('nome')||'NOME DO SIGNATÁRIO').toUpperCase()+'\n'+(v('grad')||'POSTO / GRADUAÇÃO')+(v('re')?' '+v('re'):''));requestAnimationFrame(checkPage)}function allPaperPages(){return [...document.querySelectorAll('#preview-frame > article.paper')]}
 let paginationPending=false;
 function checkPage(){
  if(paginationPending)return;
@@ -1128,7 +1139,7 @@ function normalizeMunicipality(value){
 }
 const cityField=el('cidade');
 cityField.addEventListener('blur',()=>{const formatted=normalizeMunicipality(cityField.value);if(cityField.value!==formatted){cityField.value=formatted;render()}});
-const re=el('re');re.addEventListener('input',()=>{const digits=re.value.replace(/\D/g,'').slice(0,7);re.value=digits.length>6?digits.slice(0,6)+'-'+digits.slice(6):digits;render()});const guerra=el('guerra');guerra.addEventListener('input',()=>{const start=guerra.selectionStart;const original=guerra.value;guerra.value=original.toLocaleUpperCase('pt-BR');try{guerra.setSelectionRange(start,start)}catch(e){}});const numero=el('numero');numero.addEventListener('input',()=>{const pos=numero.selectionStart;const old=numero.value;const next=old.toLocaleUpperCase('pt-BR').replace(/[^A-Z0-9ÁÀÂÃÉÊÍÓÔÕÚÜÇºª.\/-\s]/g,'').replace(/\s{2,}/g,' ');if(next!==old){numero.value=next;try{numero.setSelectionRange(Math.max(0,pos-(old.length-next.length)),Math.max(0,pos-(old.length-next.length)))}catch(e){}}const value=numero.value.trim();const warn=el('numero-aviso');warn.textContent=!value?'':(/[\/.\-\s]$/.test(value)||!/[0-9]/.test(value))?'Confira se a numeração está completa antes de imprimir.':'Confira a identificação conforme a numeração oficial da sua OPM.';warn.style.color=warn.textContent.startsWith('Confira se')?'#ffb6a8':'#969bad'});ids.forEach(id=>el(id).addEventListener('input',render));el('clear').onclick=()=>{if(!confirm('Limpar todos os campos desta parte?'))return;ids.forEach(id=>el(id).value='');el('data').value=new Date().toLocaleDateString('en-CA');relatoOriginal=null;signatureOverride=null;handwrittenSignature=null;updateSignButton();el('restore').hidden=true;showStage(0);render();window.scrollTo({top:0,behavior:'smooth'})};el('print').onclick=()=>{if(documentMode!=='import'){for(let n=0;n<3;n++){showStage(n);if(!validateStage())return}}showStage(2);render();paginateDocument();window.print()};
+const re=el('re');re.addEventListener('input',()=>{const digits=re.value.replace(/\D/g,'').slice(0,7);re.value=digits.length>6?digits.slice(0,6)+'-'+digits.slice(6):digits;render()});const guerra=el('guerra');guerra.addEventListener('input',()=>{const start=guerra.selectionStart;const original=guerra.value;guerra.value=original.toLocaleUpperCase('pt-BR');try{guerra.setSelectionRange(start,start)}catch(e){}});const numero=el('numero');numero.addEventListener('input',()=>{const pos=numero.selectionStart;const old=numero.value;const next=old.toLocaleUpperCase('pt-BR').replace(/[^A-Z0-9ÁÀÂÃÉÊÍÓÔÕÚÜÇºª.\/-\s]/g,'').replace(/\s{2,}/g,' ');if(next!==old){numero.value=next;try{numero.setSelectionRange(Math.max(0,pos-(old.length-next.length)),Math.max(0,pos-(old.length-next.length)))}catch(e){}}const value=numero.value.trim();const warn=el('numero-aviso');warn.textContent=!value?'':(/[\/.\-\s]$/.test(value)||!/[0-9]/.test(value))?'Confira se a numeração está completa antes de imprimir.':'Confira a identificação conforme a numeração oficial da sua OPM.';warn.style.color=warn.textContent.startsWith('Confira se')?'#ffb6a8':'#969bad'});ids.forEach(id=>el(id).addEventListener('input',()=>{if(!['relato','re','nome'].includes(id))metaOverride=null;render()}));el('clear').onclick=()=>{if(!confirm('Limpar todos os campos do documento?'))return;metaOverride=null;ids.forEach(id=>el(id).value='');el('data').value=new Date().toLocaleDateString('en-CA');relatoOriginal=null;signatureOverride=null;handwrittenSignature=null;updateSignButton();el('restore').hidden=true;showStage(0);render();window.scrollTo({top:0,behavior:'smooth'})};el('print').onclick=()=>{if(documentMode!=='import'){for(let n=0;n<3;n++){showStage(n);if(!validateStage())return}}showStage(2);render();paginateDocument();window.print()};
 
 for(const id of ['referencia','anexo','interessado','outro']){const check=el('check-'+id),detail=el('detail-'+id);check.addEventListener('change',()=>{detail.hidden=!check.checked;renderExtrasOnly()});detail.querySelectorAll('input').forEach(input=>input.addEventListener('input',renderExtrasOnly));}
 document.querySelectorAll('.extra-add').forEach(button=>button.addEventListener('click',()=>{
