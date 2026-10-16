@@ -31,6 +31,7 @@ jobs:
           node tests/preview-visual.mjs
           node tests/signature-regression.mjs
           node tests/share-progress.mjs
+          node tests/document-types.mjs
       - name: Salvar evidências
         if: always()
         uses: actions/upload-artifact@v4
