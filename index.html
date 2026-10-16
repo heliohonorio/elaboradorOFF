@@ -1437,37 +1437,79 @@ el('edit-cancel').onclick=closeEditor;
 dialog.addEventListener('click',e=>{if(e.target===dialog)closeEditor()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dialog.hidden)closeEditor()});
 el('edit-paper').onclick=()=>{
- paperEditing=!paperEditing;el('paper').classList.toggle('paper-editing',paperEditing);
+ paperEditing=!paperEditing;
+ el('paper').classList.toggle('paper-editing',paperEditing);
+ el('preview-frame').classList.toggle('paper-editing',paperEditing);
  el('edit-paper').setAttribute('aria-pressed',String(paperEditing));
  el('edit-paper').textContent=paperEditing?'Concluir edição':'Editar';
  el('edit-help').hidden=!paperEditing;
  if(paperEditing){el('preview-frame').classList.add('preview-open');el('preview-toggle').textContent='Ocultar A4';el('preview-toggle').setAttribute('aria-expanded','true');requestAnimationFrame(fitPaper)}
 };
-const editableAreas={meta:{title:'Dados do cabeçalho',description:'Edite os campos administrativos abaixo. A identificação institucional permanece fixa.'},body:{title:'Texto da parte',description:'Revise a redação. A alteração também será salva no campo Relato.'},signature:{title:'Assinatura e função',description:'Personalize as linhas da assinatura. Exemplo: NOME COMPLETO, 1º Ten PM, CFP ou Comando de Força Patrulha. O RE é opcional aqui.'}};
-['meta','body','signature'].forEach(id=>{
- const node=el(id);node.tabIndex=0;node.setAttribute('aria-label','Editar '+editableAreas[id].title);
- const open=()=>{if(!paperEditing)return;editingSection=id;el('edit-title').textContent=editableAreas[id].title;el('edit-description').textContent=editableAreas[id].description;editValue.value=node.textContent;dialog.hidden=false;editValue.focus()};
- node.addEventListener('click',open);node.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&paperEditing){e.preventDefault();open()}});
+const editableAreas={
+ meta:{title:'Dados do cabeçalho',description:'Altere os dados administrativos. O brasão e a identificação institucional permanecem fixos.'},
+ body:{title:'Texto do documento',description:'Altere o relato. O formulário e o PDF serão atualizados com este texto.'},
+ signature:{title:'Assinatura e função',description:'Personalize nome, graduação e função. A assinatura manuscrita, se houver, será preservada.'},
+ address:{title:'Endereço da unidade',description:'O endereço será exibido apenas no Ofício, abaixo do e-mail.'},
+ unitEmail:{title:'E-mail da unidade',description:'Digite o prefixo do e-mail institucional, sem o domínio.'}
+};
+function textForMetadata(){return [...el('meta').children].map(node=>node.innerText.trim()).filter(Boolean).join('\n')}
+function openPaperArea(id){
+ if(!paperEditing||!editableAreas[id])return;
+ editingSection=id;
+ el('edit-title').textContent=editableAreas[id].title;
+ el('edit-description').textContent=editableAreas[id].description;
+ editValue.value=id==='meta'?textForMetadata():id==='body'?el('relato').value:id==='signature'?(el('signature').querySelector('.signature-text')?.textContent||''):id==='address'?el('enderecoUnidade').value:el('emailUnidade').value;
+ dialog.hidden=false;editValue.focus();
+}
+for(const [id,node] of Object.entries({meta:el('meta'),body:el('body'),signature:el('signature'),address:el('crest-unit-address'),unitEmail:el('crest-unit-email')})){
+ node.tabIndex=0;
+ node.setAttribute('aria-label','Editar '+editableAreas[id].title);
+ node.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&paperEditing){e.preventDefault();openPaperArea(id)}});
+}
+el('preview-frame').addEventListener('click',event=>{
+ if(!paperEditing)return;
+ const node=event.target.closest('.meta,.body,.signature,.crest-unit-address,.crest-unit-email');
+ if(!node||!el('preview-frame').contains(node))return;
+ const area=node.classList.contains('crest-unit-address')?'address':node.classList.contains('crest-unit-email')?'unitEmail':node.classList.contains('meta')?'meta':node.classList.contains('body')?'body':'signature';
+ openPaperArea(area);
 });
 el('edit-save').onclick=()=>{
- if(!editingSection)return;const id=editingSection,value=editValue.value.trim();
+ if(!editingSection)return;
+ const id=editingSection,value=editValue.value.trim();
  if(!value){el('edit-description').textContent='O conteúdo não pode ficar vazio.';return}
- if(id==='body'){el('relato').value=value;el('relato').dispatchEvent(new Event('input',{bubbles:true}))}
- else if(id==='signature'){signatureOverride=value;render()}
- else{
- const lines=value.split('\n').map(s=>s.trim());
- const parse=(prefix)=>{const line=lines.find(s=>s.toLowerCase().startsWith(prefix.toLowerCase()));return line?line.slice(prefix.length).trim():null};
- const place=lines[0]||'';const comma=place.indexOf(',');if(comma>=0){el('cidade').value=place.slice(0,comma).trim()}
- const numero=parse('PARTE Nº ');if(numero!==null)el('numero').value=numero;
- const recipient=parse('Ao ');if(recipient!==null)el('destinatario').value=recipient;
- const subject=parse('Assunto: ');if(subject!==null)el('assunto').value=subject;
- const sender=parse('Do ');if(sender!==null){const grad=Array.from(el('grad').options).map(o=>o.value).filter(Boolean).sort((a,b)=>b.length-a.length).find(g=>sender.startsWith(g+' '));if(grad){el('grad').value=grad;el('guerra').value=sender.slice(grad.length).trim()}}
- const email=parse('E-mail: ');if(email!==null)el('email').value=email;
- render();
+ if(id==='body'){
+  el('relato').value=value;el('relato').dispatchEvent(new Event('input',{bubbles:true}));
+ }else if(id==='signature'){
+  signatureOverride=value;render();
+ }else if(id==='address'){
+  el('enderecoUnidade').value=value;el('enderecoUnidade').dispatchEvent(new Event('input',{bubbles:true}));
+ }else if(id==='unitEmail'){
+  el('emailUnidade').value=value.replace(/@policiamilitar\.sp\.gov\.br$/i,'');el('emailUnidade').dispatchEvent(new Event('input',{bubbles:true}));
+ }else{
+  const lines=value.replace(/\r\n?/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean);
+  const parse=prefix=>{const line=lines.find(x=>x.toLocaleLowerCase('pt-BR').startsWith(prefix.toLocaleLowerCase('pt-BR')));return line?line.slice(prefix.length).trim():null};
+  const kindLine=lines.find(x=>/^(PARTE|OF[IÍ]CIO|MEMORANDO)\s+N[º°o]/i.test(x));
+  if(kindLine){
+   const kind=/^OF[IÍ]CIO/i.test(kindLine)?'oficio':/^MEMORANDO/i.test(kindLine)?'memorando':'parte';
+   setDocumentType(kind);
+   const num=kindLine.match(/^\S+\s+N[º°o]\s*(.*)$/i);
+   if(num)el('numero').value=num[1].trim();
+  }
+  const first=lines[0]||'',comma=first.indexOf(',');
+  if(comma>=0)el('cidade').value=first.slice(0,comma).trim();
+  const recipient=parse('Ao ');if(recipient!==null)el('destinatario').value=recipient.replace(/[.;]+$/,'');
+  const subject=parse('Assunto: ');if(subject!==null)el('assunto').value=subject.replace(/[.;]+$/,'');
+  const sender=parse('Do ');
+  if(sender!==null){
+   const grad=[...el('grad').options].map(x=>x.value).filter(Boolean).sort((x,y)=>y.length-x.length).find(x=>sender.startsWith(x+' '));
+   if(grad){el('grad').value=grad;el('guerra').value=sender.slice(grad.length).trim()}
+  }
+  // Preservar até alterações livres que não correspondem aos campos do formulário.
+  // A substituição vale para a prévia, repaginação, impressão e compartilhamento.
+  metaOverride=lines;render();
  }
  closeEditor();requestAnimationFrame(checkPage);
 };
-
 let relatoOriginal=null;
 let aiProgressTimer=null,aiProgressStart=0,aiProgressValue=0;
 function setAiProgress(value,label){
