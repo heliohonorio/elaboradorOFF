@@ -19,6 +19,7 @@ for(const scenario of [
  try{
   await page.goto('file://'+resolve('index.html'),{waitUntil:'domcontentloaded'});
   await page.locator('#start-create').click();
+  await page.locator('.type-option[data-document-type="parte"]').click();
   await page.evaluate(()=>{
    const relato=document.getElementById('relato');
    relato.value='1. Solicito a alteração do mês de férias de janeiro para julho.\\n2. Justifico o pedido por viagem familiar.';

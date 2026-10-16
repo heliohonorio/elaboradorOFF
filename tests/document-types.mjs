@@ -12,13 +12,14 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.goto(pathToFileURL(resolve('index.html')).href);
   assert.equal(await page.locator('#document-type').inputValue(),'parte');
   await page.locator('#start-create').click();
+  await page.locator('.type-option[data-document-type="parte"]').click();
   assert.equal(await page.locator('#address-step').isVisible(),false,'endereço não aparece na Parte');
   assert.equal(await page.locator('#crest-unit-address').isVisible(),false,'endereço não é impresso na Parte');
   assert.match(await page.locator('#meta').innerText(),/PARTE Nº/);
 
   await page.locator('#return-home').click();
-  await page.locator('#document-type').selectOption('oficio');
   await page.locator('#start-create').click();
+  await page.locator('.type-option[data-document-type="oficio"]').click();
   assert.equal(await page.locator('#address-step').isVisible(),true,'endereço aparece só em Ofício');
   assert.equal(await page.locator('#enderecoUnidade').evaluate(e=>e.required),true,'endereço obrigatório no Ofício');
   const address='Av. Cruzeiro do Sul, 260\nCanindé - São Paulo/SP\nCEP: 03033-001';
@@ -60,8 +61,8 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.locator('#edit-paper').click();
 
   await page.locator('#return-home').click();
-  await page.locator('#document-type').selectOption('memorando');
   await page.locator('#start-create').click();
+  await page.locator('.type-option[data-document-type="memorando"]').click();
   assert.equal(await page.locator('#address-step').isVisible(),false,'Memorando não mostra endereço');
   assert.equal(await page.locator('#crest-unit-address').isVisible(),false,'Memorando não imprime endereço');
   assert.match(await page.locator('#meta').innerText(),/MEMORANDO Nº/);
