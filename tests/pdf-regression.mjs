@@ -79,6 +79,7 @@ async function run(engine,device,deviceName){
  try{
   await page.goto('file://'+resolve('index.html'),{waitUntil:'domcontentloaded'});
   await page.locator('#start-create').click();
+  await page.locator('.type-option[data-document-type="parte"]').click();
   await page.evaluate(()=>{
    const fields={grad:'Sd PM',re:'153115-8',nome:'USUÁRIO DE TESTE',guerra:'TESTE',cidade:'São Paulo',emailUnidade:'opmunidade123456',data:'2026-10-15',numero:'DL 00/2026',destinatario:'Sr Comandante',assunto:'Teste de formatação'};
    for(const [k,v] of Object.entries(fields)){const node=document.getElementById(k);node.value=v;node.dispatchEvent(new Event('input',{bubbles:true}))}
