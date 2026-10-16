@@ -21,6 +21,18 @@ for (const engine of [chromium, webkit]) {
       const page = await browser.newPage({ viewport: { width, height: 850 } });
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
+      // O contador externo não participa do editor. Resposta local evita
+      // falhas de CORS ou indisponibilidade desse serviço durante o teste.
+      await page.route('**/functions/v1/contador-visitas', route => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-allow-methods': 'GET,POST,OPTIONS',
+          'access-control-allow-headers': '*'
+        },
+        body: '{"total":1}'
+      }));
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
 
       check(await page.locator('#start-choices').isVisible(), 'Tela inicial acessível');
