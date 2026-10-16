@@ -13,6 +13,11 @@ const scenario=[
 function compact(s){return String(s).replace(/\s+/g,' ').trim()}
 async function fill(page,text=scenario){
  await page.locator('#start-create').click();
+ // A referência A4 anterior abre o formulário diretamente; a versão nova
+ // requer selecionar o tipo antes de entrar no mesmo editor.
+ if(await page.locator('#document-type-chooser').isVisible()){
+  await page.locator('.type-option[data-document-type="parte"]').click();
+ }
  await page.evaluate((payload)=>{
   const vals={
    grad:'Sd PM',re:'153115-8',nome:'USUÁRIO DE TESTE',guerra:'TESTE',cidade:'São Paulo',
