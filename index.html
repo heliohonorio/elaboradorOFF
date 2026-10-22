@@ -915,7 +915,8 @@ function filled(id){const v=el(id).value.trim();return id==='email'||(id==='re'?
 }
 let signatureOverride=null;let handwrittenSignature=null;function renderRelato(text){
  const container=el('body');container.replaceChildren();
- const lines=text.replace(/\r\n?/g,'\n').split('\n');
+ const lines=text.replace(/\r\n?/g,'\n').split('\n').map(line=>
+  line.replace(/^([\t ]*\d+(?:\.\d+)*\.)[\t ]*(?=\p{L})/u,'$1 '));
  const startsItem=/^\s*\d+(?:\.\d+)*\.\s+\S/;
  let buffer=[],pendingGap=false;
  function flush(){
