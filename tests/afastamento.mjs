@@ -9,7 +9,7 @@ const output=await mkdtemp(join(tmpdir(),'p118-qa-'));
 console.log('QA:',output);
 for(const engine of [chromium,webkit]){
  const browser=await engine.launch({headless:true});
- try{for(const width of [1440,390]){
+ try{for(const width of [1440,414,390,375]){
  const page=await browser.newPage({viewport:{width,height:1000}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/functions/v1/contador-visitas',r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"total":1}'}));
@@ -18,9 +18,16 @@ for(const engine of [chromium,webkit]){
  assert.equal(await page.locator('.type-option').count(),4);
  await page.locator('[data-document-type="afastamento"]').click();
  assert.ok(await page.locator('#p118-editor').isVisible());
+ assert.equal(await page.locator('#p118-grad').evaluate(n=>n.tagName),'SELECT','Posto/graduação usa lista suspensa');
+ assert.deepEqual(await page.locator('#p118-grad option').evaluateAll(ns=>ns.map(n=>n.value)),await page.locator('#grad option').evaluateAll(ns=>ns.map(n=>n.value)),'Lista igual aos outros documentos');
+ await page.locator('#p118-grad').selectOption('2º Sgt PM');
+ assert.equal(await page.locator('#p118-out-grad').innerText(),'2º Sgt PM','Seleção aparece no documento');
  assert.ok(await page.locator('#editor-layout').isHidden());
  assert.equal(await page.evaluate(()=>validateP118()),false);
- for(const [k,v] of Object.entries({re:'1234567',nome:'NOME DE TESTE DO SOLICITANTE',grad:'Sd PM',opm:'DL',local:'SÃO PAULO',pedido:'2026-10-28',dias:'1',inicio:'2026-11-03',motivo:'Solicito a dispensa do serviço por motivo de interesse particular.'}))await page.locator('#p118-'+k).fill(v);
+ for(const [k,v] of Object.entries({re:'1234567',nome:'NOME DE TESTE DO SOLICITANTE',grad:'Sd PM',opm:'DL',local:'SÃO PAULO',pedido:'2026-10-28',dias:'1',inicio:'2026-11-03',motivo:'Solicito a dispensa do serviço por motivo de interesse particular.'})){
+  if(k==='grad')await page.locator('#p118-grad').selectOption(v);
+  else await page.locator('#p118-'+k).fill(v);
+ }
  assert.equal(await page.locator('#p118-out-re').innerText(),'123456-7');
  assert.equal(await page.locator('#p118-out-inicio').innerText(),'03/11/26');
  assert.equal(await page.locator('#p118-check-ds').innerText(),'X');
@@ -50,6 +57,17 @@ for(const engine of [chromium,webkit]){
  await page.locator('#p118-tipo').selectOption('ds');
  assert.equal(await page.locator('#p118-out-boletim').innerText(),'');
  await page.evaluate(()=>fitP118());
+ const layoutErrors=await page.evaluate(()=>{
+  const form=document.querySelector('#p118-form'),bounds=form.getBoundingClientRect(),css=getComputedStyle(form);
+  const left=bounds.left+parseFloat(css.paddingLeft)+parseFloat(css.borderLeftWidth);
+  const right=bounds.right-parseFloat(css.paddingRight)-parseFloat(css.borderRightWidth);
+  return [...form.querySelectorAll('.p118-field input,.p118-field select,.p118-field textarea')].filter(node=>{
+   const r=node.getBoundingClientRect();return r.width>0&&(r.left<left-1||r.right>right+1);
+  }).map(node=>node.id);
+ });
+ assert.deepEqual(layoutErrors,[],'Campos devem respeitar margens do formulário');
+ const days=await page.locator('#p118-dias').boundingBox(),start=await page.locator('#p118-inicio').boundingBox();
+ assert.ok(start.y>=days.y+days.height-1,'Data de início não deve sobrepor número de dias');
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Sem rolagem horizontal');
  await page.screenshot({path:output+'/p118-'+engine.name()+'-'+width+'.png',fullPage:true});
  await page.emulateMedia({media:'print'});
