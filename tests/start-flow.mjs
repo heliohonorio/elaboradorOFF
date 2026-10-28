@@ -39,6 +39,16 @@ for (const engine of [chromium, webkit]) {
       check(await page.locator('#document-type-chooser').isHidden(), 'Escolha do tipo só após Criar');
       check(await page.locator('#document-type').isHidden(), 'Select antigo não está visível');
       check(await page.locator('#start-authorize').isVisible(), 'Botão Autorizar DS/LP disponível na tela inicial');
+      const authorizeStyle = await page.locator('#start-authorize').evaluate(button => {
+        const css = getComputedStyle(button),rect = button.getBoundingClientRect();
+        return {image: css.backgroundImage, border: css.borderTopWidth, width: rect.width, right: rect.right};
+      });
+      check(authorizeStyle.image.includes('linear-gradient') && authorizeStyle.image.includes('151, 68, 72') &&
+        authorizeStyle.image.includes('193, 166, 105'), 'Uma borda com tons de vermelho e dourado');
+      check(parseFloat(authorizeStyle.border) >= 1 && authorizeStyle.right <= width + 1,
+        'Borda mantém tamanho e responsividade do botão');
+      const editBorderImage = await page.locator('#start-import').evaluate(button => getComputedStyle(button).backgroundImage);
+      check(editBorderImage === 'none','Outros botões sem alteração na borda');
       check(await page.locator('#authorize-panel').isHidden(), 'Importador do superior inicialmente oculto');
       check((await page.locator('#start-heading').textContent()).trim() === 'O que deseja fazer?', 'Título inicial correto');
 
