@@ -52,7 +52,7 @@ function setup(){
    signature=null;render();
    return;
   }
-  if(!valid(false))return;
+  if(!valid(true))return;
   window.openP118SupervisorSignature();
  });
  render();
