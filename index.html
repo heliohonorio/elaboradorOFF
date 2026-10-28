@@ -622,20 +622,26 @@ body:has(#editor-layout:not([hidden])) .intro{display:none}
  #share.share-loading,#share.share-ready{transition:none!important}
 }
 @media print{#share.share-loading,#share.share-ready{background-image:none!important}}
-/* O progresso ocupa toda a altura do botão, atrás do texto. */
+/* O preenchimento avança sobre a superfície inteira, atrás do texto.
+   A mudança é restrita aos botões, sem alterar os documentos A4. */
 button.export-preparing,button.export-ready{
- position:relative!important;overflow:hidden!important;opacity:1!important;
- background-image:linear-gradient(90deg,#126139,#197c49)!important;
- background-repeat:no-repeat!important;background-position:left center!important;
- background-size:var(--export-progress,0%) 100%!important;
- background-color:#24242a!important;color:#fff!important;
- transition:background-size .3s linear!important;
+ position:relative!important;isolation:isolate;overflow:hidden!important;opacity:1!important;
+ background:#24242a!important;color:#fff!important;
+}
+button.export-preparing::before,button.export-ready::before{
+ content:"";position:absolute;z-index:-1;inset:0 auto 0 0;
+ width:var(--export-progress,0%);height:100%;
+ background:linear-gradient(110deg,#125d3b,#208556 70%,#2a9d68);
+ transition:width .24s ease-out;pointer-events:none;
 }
 button.export-preparing{cursor:progress!important}
-button.export-preparing small,button.export-ready small{color:#fff!important;line-height:1.5}
+button.export-preparing small,button.export-ready small{color:#f1fff7!important;line-height:1.5}
 button.export-ready{border-color:#31a56e!important;--export-progress:100%}
-@media(prefers-reduced-motion:reduce){button.export-preparing,button.export-ready{transition:none!important}}
-@media print{button.export-preparing,button.export-ready{background-image:none!important}}
+button.export-preparing:disabled{opacity:1!important}
+@media(prefers-reduced-motion:reduce){
+ button.export-preparing::before,button.export-ready::before{transition:none!important}
+}
+@media print{button.export-preparing::before,button.export-ready::before{display:none!important}}
 
 /* Fluxo inicial em duas etapas: ações principais e seleção do tipo. */
 #start-choices[hidden],.document-type-chooser[hidden]{display:none!important}
@@ -795,10 +801,10 @@ body.p118-active .intro{display:none}
 <div id="p118-export-dialog" role="dialog" aria-modal="true" aria-labelledby="p118-export-title" hidden>
  <div class="p118-export-box">
   <h3 id="p118-export-title">Salvar ou compartilhar</h3>
-  <p>Escolha uma opção para preparar o arquivo. Depois, salve no dispositivo ou compartilhe pelo aplicativo de sua preferência. Após a autorização do superior, o documento final é disponibilizado em PDF.</p>
+  <p>Salve o documento em PDF ou prepare um Word para o superior. Ele importa esse arquivo em <strong>Autorizar DS/LP</strong> no ElaboradorOFF. Depois da autorização, o documento final fica disponível somente em PDF.</p>
   <div class="p118-format-options">
    <button type="button" id="p118-export-pdf" aria-pressed="false"><strong>PDF</strong><small>Arquivo pronto para enviar ou imprimir</small></button>
-   <button type="button" id="p118-export-docx" aria-pressed="false"><strong>Enviar para superior assinar</strong><small>O superior importa o arquivo Word em “Autorizar DS/LP” no ElaboradorOFF, preenche o Encaminhamento 1 e assina.</small></button>
+   <button type="button" id="p118-export-docx" aria-pressed="false"><strong>Enviar para superior assinar</strong><small>Gera um Word (.docx). O superior abre em “Autorizar DS/LP”, preenche o Encaminhamento 1 e pode assinar.</small></button>
   </div>
   <p id="p118-export-result" role="status" aria-live="polite">Escolha PDF ou envio para assinatura do superior.</p>
   <div id="p118-export-actions" class="p118-export-actions" hidden>
@@ -1495,10 +1501,11 @@ function setButtonPreparationProgress(button,value){
  state.progress=Math.max(state.progress,Math.min(100,Math.round(value)));
  button.style.setProperty('--export-progress',state.progress+'%');
  button.dataset.exportProgress=String(state.progress);
+ button.setAttribute('aria-label',state.label+' Progresso estimado: '+state.progress+'%.');
 }
 function beginButtonPreparation(button,label){
  if(!button||exportLabels.has(button))return false;
- const state={html:button.innerHTML,ariaLabel:button.getAttribute('aria-label'),progress:0,timer:null};
+ const state={html:button.innerHTML,ariaLabel:button.getAttribute('aria-label'),label,progress:0,timer:null};
  exportLabels.set(button,state);
  button.classList.remove('export-ready');
  button.classList.add('export-preparing');
@@ -1508,7 +1515,11 @@ function beginButtonPreparation(button,label){
  else button.textContent=label;
  button.disabled=true;setButtonPreparationProgress(button,5);
  const started=performance.now();
- state.timer=setInterval(()=>setButtonPreparationProgress(button,Math.min(90,5+85*(1-Math.exp(-(performance.now()-started)/4500)))),150);
+ state.timer=setInterval(()=>{
+  // Aproximação visual até 94%; 100% só após gerar o arquivo.
+  const elapsed=performance.now()-started;
+  setButtonPreparationProgress(button,Math.min(94,7+87*(1-Math.exp(-elapsed/1900))));
+ },100);
  return true;
 }
 function endButtonPreparation(button,ready=false){
@@ -1528,7 +1539,7 @@ function endButtonPreparation(button,ready=false){
 async function completeButtonPreparation(button){
  const state=exportLabels.get(button);if(!state)return;
  clearInterval(state.timer);setButtonPreparationProgress(button,100);
- await new Promise(resolve=>setTimeout(resolve,350));
+ await new Promise(resolve=>setTimeout(resolve,380));
  if(exportLabels.get(button)===state)endButtonPreparation(button,true);
 }
 

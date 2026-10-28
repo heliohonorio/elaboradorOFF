@@ -39,9 +39,21 @@ for(const engine of [chromium,webkit]){
   assert.equal(await page.evaluate(()=>validateP118()),true,'P-118 sem assinatura deve ser válido');
   assert.ok(await page.locator('#p118-ink').isHidden(),'Não cria assinatura automática');
   await page.locator('#p118-export-open').click();
+  const superiorText=await page.locator('#p118-export-docx').innerText();
+  assert.match(superiorText,/Enviar para superior assinar/,'Botão de Word tem ação clara');
+  assert.match(superiorText,/Autorizar DS\/LP/,'Instrução de importação para superior');
+  assert.match(superiorText,/pode assinar/,'Assinatura facultativa está explicada');
   await page.locator('#p118-export-docx').click();
   await page.locator('#p118-export-save').waitFor({state:'visible',timeout:15000});
-  assert.ok(await page.locator('#p118-export-docx').evaluate(e=>e.classList.contains('export-ready')),'Word preparado');
+  const readyWord=await page.locator('#p118-export-docx').evaluate(b=>{
+   const rectangle=b.getBoundingClientRect(),fill=getComputedStyle(b,'::before');
+   return {ready:b.classList.contains('export-ready'),progress:Number(b.dataset.exportProgress),surface:fill.width,
+    wholeWidth:rectangle.width,height:parseFloat(fill.height),wholeHeight:rectangle.height};
+  });
+  assert.ok(readyWord.ready,'Word preparado');
+  assert.equal(readyWord.progress,100,'Carregamento do Word conclui em 100%');
+  assert.ok(parseFloat(readyWord.surface)>readyWord.wholeWidth-6,'Word preenche toda a largura do botão');
+  assert.ok(readyWord.height>readyWord.wholeHeight-6,'Word preenche toda a altura do botão');
   const record=await page.evaluate(async()=>{
    return await window.P118Workflow.readWord(p118ExportFile,async()=>{throw Error('Leitura não deveria depender de CDN')});
   });
@@ -65,15 +77,32 @@ for(const engine of [chromium,webkit]){
   await page.locator('#p118-export-open').click();
   await page.locator('#p118-export-pdf').click();
   await page.waitForFunction(()=>!!window.__finishP118Pdf);
-  const loading=await page.locator('#p118-export-pdf').evaluate(b=>({busy:b.getAttribute('aria-busy'),loading:b.classList.contains('export-preparing'),text:b.textContent,disabled:b.disabled}));
+  await page.waitForTimeout(260);
+  const loading=await page.locator('#p118-export-pdf').evaluate(b=>{
+   const r=b.getBoundingClientRect(),overlay=getComputedStyle(b,'::before');
+   return {busy:b.getAttribute('aria-busy'),loading:b.classList.contains('export-preparing'),
+    text:b.textContent,disabled:b.disabled,progress:Number(b.dataset.exportProgress),
+    fillHeight:parseFloat(overlay.height),buttonHeight:r.height,fillWidth:parseFloat(overlay.width)};
+  });
   assert.equal(loading.busy,'true');
   assert.equal(loading.loading,true);
   assert.ok(loading.text.includes('Preparando PDF'));
   assert.equal(loading.disabled,true);
+  assert.ok(loading.progress>5&&loading.progress<100,'Progresso avança durante a preparação sem indicar conclusão');
+  assert.ok(loading.fillWidth>2,'Preenchimento visível na própria superfície');
+  assert.ok(loading.fillHeight>loading.buttonHeight-6,'Preenchimento alcança toda a altura');
   assert.ok(await page.locator('#p118-export-actions').isHidden());
   await page.evaluate(()=>window.__finishP118Pdf());
   await page.locator('#p118-export-save').waitFor({state:'visible'});
-  assert.ok(await page.locator('#p118-export-pdf').evaluate(e=>e.classList.contains('export-ready')));
+  const readyPDF=await page.locator('#p118-export-pdf').evaluate(b=>{
+   const rectangle=b.getBoundingClientRect(),fill=getComputedStyle(b,'::before');
+   return {ready:b.classList.contains('export-ready'),progress:Number(b.dataset.exportProgress),
+    width:parseFloat(fill.width),height:parseFloat(fill.height),buttonWidth:rectangle.width,buttonHeight:rectangle.height};
+  });
+  assert.ok(readyPDF.ready);
+  assert.equal(readyPDF.progress,100,'Botão só chega a 100% depois do arquivo pronto');
+  assert.ok(readyPDF.width>readyPDF.buttonWidth-6&&readyPDF.height>readyPDF.buttonHeight-6,
+    'PDF preenche a área inteira do botão ao finalizar');
   await page.evaluate(()=>{createP118Pdf=window.__originalP118Pdf});
   await page.locator('#p118-export-close').click();
 
