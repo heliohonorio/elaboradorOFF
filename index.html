@@ -641,13 +641,13 @@ body:has(#editor-layout:not([hidden])) .intro{display:none}
 @media print{#preview-frame.paper-editing .paper .meta,#preview-frame.paper-editing .paper .body,#preview-frame.paper-editing .paper .signature,#preview-frame.paper-editing .crest-unit-address,#preview-frame.paper-editing .crest-unit-email{outline:none!important}}
 
 /* PM P-118: formulário próprio, preservando os editores de correspondência. */
-.p118-layout{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:18px;align-items:start}
+.p118-layout{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:18px;align-items:start;width:100%;min-width:0}
 #p118-editor[hidden]{display:none!important}
 .p118-field{margin:0 0 16px}.p118-field label{display:block;font-size:14px;font-weight:600;margin-bottom:7px}
 .p118-field input,.p118-field select,.p118-field textarea{width:100%;padding:11px;border:1px solid #686875;border-radius:9px;background:#0e1119;color:#fff;font:inherit}
 .p118-field :is(input,select,textarea):focus-visible{outline:2px solid #b5a8ff;outline-offset:2px}
 .p118-field small{display:block;color:#b6b9cb;font-size:12px;margin-top:5px;line-height:1.4}
-.p118-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.p118-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 #p118-form fieldset{border:0;padding:0;margin:0 0 18px;min-width:0}#p118-form legend{font-weight:700;font-size:15px;margin-bottom:16px}
 #p118-status{font-size:13px;line-height:1.5;min-height:1.5em}
 #p118-frame{overflow:hidden;background:#d4d5d9;border-radius:4px;padding:8px}
@@ -668,6 +668,12 @@ body:has(#editor-layout:not([hidden])) .intro{display:none}
 .p118-secret{height:26mm}.p118-secret .p118-check{margin-bottom:1mm}
 .p118-approvals{display:grid;grid-template-columns:1fr 1fr;gap:1mm 1.5mm}.p118-approvals table{height:24mm;margin:0}.p118-approvals td{font-size:7pt}.p118-approvals .p118-check{width:3.5mm;height:3.5mm;margin-left:0;margin-right:1mm}.p118-decision{height:9mm}
 .p118-footer{font-size:8pt;margin-top:1mm}
+/* Campos do P-118: conter entradas nativas do Safari dentro do painel, sem afetar o A4. */
+#p118-form,#p118-preview,.p118-pair,.p118-field{min-width:0;max-width:100%}
+.p118-field :is(input,select,textarea){display:block;min-width:0;max-width:100%;box-sizing:border-box}
+#p118-form input[type="date"]{min-width:0;max-width:100%;width:100%}
+#p118-form input[type="date"]::-webkit-date-and-time-value{min-width:0;text-align:left}
+.p118-dates{grid-template-columns:minmax(0,1fr)}
 body.p118-active .intro{display:none}
 @media(max-width:820px){.p118-layout{grid-template-columns:1fr}.p118-pair{gap:10px}}
 @media print{
@@ -710,13 +716,13 @@ body.p118-active .intro{display:none}
 <h2>Dispensa Serviço/LP</h2><p class="hint">Preencha a solicitação do PM P-118. Os campos da Secretaria/P1 e dos superiores permanecem disponíveis no documento para os responsáveis.</p>
 <fieldset><legend>1. Identificação</legend>
 <div class="p118-pair"><div class="p118-field"><label for="p118-re">RE - DC *</label><input id="p118-re" required pattern="[0-9]{6}-[0-9]" maxlength="8" placeholder="000000-0" inputmode="numeric"></div>
-<div class="p118-field"><label for="p118-grad">Posto ou graduação *</label><input id="p118-grad" required maxlength="25" placeholder="Ex.: Sd PM"></div></div>
+<div class="p118-field"><label for="p118-grad">Posto ou graduação *</label><select id="p118-grad" required><option value="">Selecione...</option><option>Sd PM</option><option>Cb PM</option><option>3º Sgt PM</option><option>2º Sgt PM</option><option>1º Sgt PM</option><option>Subten PM</option><option>2º Ten PM</option><option>1º Ten PM</option><option>Cap PM</option><option>Maj PM</option><option>Ten Cel PM</option><option>Cel PM</option></select></div></div>
 <div class="p118-field"><label for="p118-nome">Nome completo *</label><input id="p118-nome" required maxlength="75" autocomplete="name"></div>
 <div class="p118-pair"><div class="p118-field"><label for="p118-opm">OPM *</label><input id="p118-opm" required maxlength="35" placeholder="Ex.: DL"></div><div class="p118-field"><label for="p118-local">Local da OPM *</label><input id="p118-local" required maxlength="50" placeholder="Ex.: São Paulo"></div></div>
 </fieldset><fieldset><legend>2. Afastamento</legend>
 <div class="p118-field"><label for="p118-tipo">Tipo de afastamento *</label><select id="p118-tipo"><option value="ds">Dispensa do serviço</option><option value="lp">Licença-prêmio</option></select></div>
 <div class="p118-field"><label for="p118-pedido">Data do pedido *</label><input type="date" id="p118-pedido" required></div>
-<div class="p118-pair"><div class="p118-field"><label for="p118-dias">Número de dias *</label><input type="number" id="p118-dias" min="1" max="999" step="1" required></div><div class="p118-field"><label for="p118-inicio">Data de início *</label><input type="date" id="p118-inicio" required></div></div>
+<div class="p118-pair p118-dates"><div class="p118-field"><label for="p118-dias">Número de dias *</label><input type="number" id="p118-dias" min="1" max="999" step="1" required></div><div class="p118-field"><label for="p118-inicio">Data de início *</label><input type="date" id="p118-inicio" required></div></div>
 <div class="p118-field" id="p118-ds-field"><label for="p118-ordem">Dispensa do ano</label><select id="p118-ordem"><option value="">Deixar em branco para conferência</option><option value="1">1ª</option><option value="2">2ª</option><option value="3">3ª</option><option value="4">4ª</option><option value="5">5ª</option><option value="6">6ª</option></select><small>Indique qual dispensa será utilizada (1ª a 6ª), se souber.</small></div>
 <div class="p118-field" id="p118-lp-field" hidden><label for="p118-boletim">Bol G PM da concessão *</label><input id="p118-boletim" maxlength="80" placeholder="Número e data do boletim"></div>
 <div class="p118-field"><label for="p118-motivo">Motivo do afastamento *</label><textarea id="p118-motivo" rows="4" required maxlength="400" placeholder="Informe o motivo de forma clara e objetiva."></textarea><small>Até 400 caracteres. Confira o texto na prévia antes de salvar.</small></div>
