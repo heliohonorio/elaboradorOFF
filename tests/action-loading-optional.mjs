@@ -40,11 +40,13 @@ for(const engine of [chromium,webkit]){
   assert.ok(await page.locator('#p118-ink').isHidden(),'Não cria assinatura automática');
   await page.locator('#p118-export-open').click();
   const superiorText=await page.locator('#p118-export-docx').innerText();
-  assert.match(superiorText,/Enviar para superior assinar/,'Botão de Word tem ação clara');
+  assert.match(superiorText,/Para o superior Assinar/,'Botão de Word tem ação clara');
   assert.match(superiorText,/Autorizar DS\/LP/,'Instrução de importação para superior');
   assert.match(superiorText,/pode assinar/,'Assinatura facultativa está explicada');
   await page.locator('#p118-export-docx').click();
   await page.locator('#p118-export-save').waitFor({state:'visible',timeout:15000});
+  assert.equal(await page.locator('#p118-export-save').innerText(),'Salvar','Botão Salvar apresentado após preparar arquivo');
+  assert.equal(await page.locator('#p118-export-share').innerText(),'Compartilhar','Compartilhar continua disponível');
   const readyWord=await page.locator('#p118-export-docx').evaluate(b=>{
    const rectangle=b.getBoundingClientRect(),fill=getComputedStyle(b,'::before');
    return {ready:b.classList.contains('export-ready'),progress:Number(b.dataset.exportProgress),surface:fill.width,
