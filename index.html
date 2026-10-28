@@ -2071,7 +2071,12 @@ function resetP118Export(){
  el('p118-export-docx').hidden=window.P118Workflow.isSupervisorMode();
  el('p118-export-result').textContent=window.P118Workflow.isSupervisorMode()?'Selecione PDF.':'Selecione PDF ou Word.';
  el('p118-export-actions').hidden=true;
- for(const format of ['pdf','docx'])el('p118-export-'+format).setAttribute('aria-pressed','false');
+ for(const format of ['pdf','docx']){
+  const button=el('p118-export-'+format);
+  endButtonPreparation(button);
+  button.classList.remove('export-ready');
+  button.setAttribute('aria-pressed','false');
+ }
 }
 el('p118-export-open').onclick=()=>{
  normalizeP118Identification();renderP118();
@@ -2084,44 +2089,70 @@ p118Dialog.addEventListener('click',event=>{if(event.target===p118Dialog)closeP1
 p118Dialog.addEventListener('keydown',event=>{if(event.key==='Escape')closeP118Export()});
 el('p118-form').addEventListener('submit',event=>{event.preventDefault();el('p118-export-open').click()});
 async function prepareP118Export(format){
- if(window.P118Workflow.isSupervisorMode()&&format!=='pdf')throw Error('O superior só pode salvar ou compartilhar em PDF.');
- if(format==='docx'&&!p118Signature){el('p118-export-result').textContent='Assine a solicitação antes de gerar o Word para o superior.';return}
- const status=el('p118-export-result'),buttons=['pdf','docx'].map(x=>el('p118-export-'+x));
- buttons.forEach(button=>{button.disabled=true;button.setAttribute('aria-pressed',String(button.id==='p118-export-'+format))});
+ if(window.P118Workflow.isSupervisorMode()&&format!=='pdf')return;
+ const status=el('p118-export-result');
+ const active=el('p118-export-'+format),formatLabel=format==='pdf'?'PDF':'Word';
+ const buttons=['pdf','docx'].map(x=>el('p118-export-'+x));
+ if(!beginButtonPreparation(active,'Preparando '+formatLabel+'...'))return;
+ buttons.forEach(button=>{button.disabled=true;button.classList.remove('export-ready');button.setAttribute('aria-pressed',String(button===active))});
  el('p118-export-actions').hidden=true;p118ExportFile=null;
- status.textContent='Preparando '+(format==='pdf'?'PDF':'Word')+'...';
+ status.textContent='Preparando '+formatLabel+'...';
+ let ready=false;
  try{
+  await new Promise(resolve=>requestAnimationFrame(resolve));
   const code=el('p118-tipo').value==='lp'?'LP':'DS';
-   const grad=el('p118-grad').value.trim();
-   const name=normalizeP118Name(el('p118-nome').value).replace(/[\\/:*?"<>|\-]/g,' ').replace(/\s+/g,' ').trim();
-   const filename='ElaboradorOFF - '+code+' '+grad+' '+name+'.'+(format==='pdf'?'pdf':'docx');
+  const grad=el('p118-grad').value.trim();
+  const name=normalizeP118Name(el('p118-nome').value).replace(/[\\/:*?"<>|\-]/g,' ').replace(/\s+/g,' ').trim();
+  const filename='ElaboradorOFF - '+code+' '+grad+' '+name+'.'+(format==='pdf'?'pdf':'docx');
   const blob=format==='pdf'?await createP118Pdf():window.createP118WordDocument(await createP118WordSnapshot(),window.P118Workflow.snapshot(p118Signature));
   p118ExportFile=new File([blob],filename,{type:blob.type});
   status.textContent='Arquivo pronto. Você pode salvar ou compartilhar.';
   el('p118-export-actions').hidden=false;
   const supported=!!navigator.share&&(!navigator.canShare||navigator.canShare({files:[p118ExportFile]}));
   el('p118-export-share').hidden=!supported;
+  ready=true;
  }catch(error){status.textContent='Não foi possível criar o arquivo: '+(error.message||error)}
- finally{buttons.forEach(button=>button.disabled=false)}
+ finally{
+  endButtonPreparation(active,ready);
+  buttons.forEach(button=>button.disabled=false);
+ }
 }
+
 el('p118-export-pdf').onclick=()=>prepareP118Export('pdf');
 el('p118-export-docx').onclick=()=>{if(!window.P118Workflow.isSupervisorMode())prepareP118Export('docx')};
 el('p118-export-save').onclick=()=>{
  if(!p118ExportFile)return;
- downloadPreparedPdf(p118ExportFile);
- el('p118-export-result').textContent='Arquivo salvo. Confira a pasta de downloads.';
+ const button=el('p118-export-save');
+ if(!beginButtonPreparation(button,'Iniciando download...'))return;
+ try{
+  downloadPreparedPdf(p118ExportFile);
+  el('p118-export-result').textContent='Download iniciado. Confira a pasta de downloads.';
+ }catch(error){
+  el('p118-export-result').textContent='Não foi possível iniciar o download: '+(error.message||error);
+ }finally{setTimeout(()=>endButtonPreparation(button),650)}
 };
 el('p118-export-share').onclick=async()=>{
  if(!p118ExportFile)return;
+ const button=el('p118-export-share');
+ if(!beginButtonPreparation(button,'Abrindo compartilhamento...'))return;
  try{
   if(!navigator.share)throw Error('Compartilhamento não disponível neste navegador.');
   await navigator.share({files:[p118ExportFile],title:'PM P-118'});
   el('p118-export-result').textContent='Arquivo enviado ao compartilhamento do dispositivo.';
  }catch(error){
   if(error.name!=='AbortError')el('p118-export-result').textContent='Compartilhamento indisponível. Use Salvar arquivo.';
- }
+ }finally{endButtonPreparation(button)}
 };
-el('p118-print').onclick=()=>{if(validateP118())window.print()};
+el('p118-print').onclick=async()=>{
+ if(!validateP118())return;
+ const button=el('p118-print');
+ if(!beginButtonPreparation(button,'Preparando impressão...'))return;
+ try{
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+  window.print();
+ }catch(error){el('p118-status').textContent='Falha ao preparar impressão: '+(error.message||error)}
+ finally{endButtonPreparation(button)}
+};
 el('p118-sign').onclick=()=>{if(window.P118Workflow.isSupervisorMode())return;p118SignTarget='applicant';el('sign-open').click()};
 el('p118-clear').onclick=()=>{
  if(!confirm('Limpar os campos e a assinatura deste formulário?'))return;
