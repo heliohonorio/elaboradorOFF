@@ -1806,7 +1806,7 @@ async function createP118Pdf(){
 }
 p118Fields.forEach(key=>el('p118-'+key).addEventListener('input',()=>{
  el('p118-'+key).setCustomValidity('');
- if(key==='nome'||key==='local')normalizeP118Identification();
+ if(key==='nome'||key==='local'){const field=el('p118-'+key);field.value=field.value.toLocaleUpperCase('pt-BR')}
  if(key==='re'){const field=el('p118-re'),digits=field.value.replace(/\D/g,'').slice(0,7);field.value=digits.length>6?digits.slice(0,6)+'-'+digits.slice(6):digits}
  renderP118();
 }));
