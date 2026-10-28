@@ -31,12 +31,18 @@ for(const engine of [chromium,webkit]){
  }
  assert.equal(await page.locator('#p118-out-re').innerText(),'123456-7');
  await page.locator('#p118-nome').fill('hELIO DE souza pEREIRA filho');
+ await page.locator('#p118-opm').fill('dL - pLaN fRoTa');
+ assert.equal(await page.locator('#p118-opm').inputValue(),'DL - PLAN FROTA','OPM em maiúsculas enquanto digita');
+ assert.equal(await page.locator('#p118-out-opm').innerText(),'DL - PLAN FROTA','OPM padronizada na prévia');
  await page.locator('#p118-local').fill('sAo paUlo');
  await page.locator('#p118-local').blur();
  assert.equal(await page.locator('#p118-nome').inputValue(),'HELIO DE SOUZA PEREIRA FILHO','Nome padronizado');
  assert.equal(await page.locator('#p118-local').inputValue(),'SÃO PAULO','Município padronizado');
  assert.equal(await page.locator('#p118-out-nome').innerText(),'HELIO DE SOUZA PEREIRA FILHO','Nome na prévia');
  assert.equal(await page.locator('#p118-out-local').innerText(),'SÃO PAULO','Município na prévia');
+ await page.locator('#p118-opm').fill('dl');
+ await page.locator('#p118-opm').blur();
+ assert.equal(await page.locator('#p118-opm').inputValue(),'DL','OPM permanece padronizada após sair do campo');
  assert.equal(await page.locator('#p118-out-inicio').innerText(),'03/11/26');
  assert.equal(await page.locator('#p118-check-ds').innerText(),'X');
  await page.locator('#p118-ordem').selectOption('2');
@@ -181,6 +187,19 @@ for(const engine of [chromium,webkit]){
   await page.mouse.move(box2.x+120,box2.y+72,{steps:10});await page.mouse.up();
   await page.locator('#sign-apply').click();
   assert.ok(await page.locator('#p118-supervisor-ink').isVisible(),'Assinatura somente no encaminhamento 1');
+  const overlay=await page.locator('#p118-supervisor-ink').evaluate(ink=>{
+   const paper=document.querySelector('#p118-paper'),cell=document.querySelector('.p118-first-sign-cell');
+   const ir=ink.getBoundingClientRect(),cr=cell.getBoundingClientRect(),pr=paper.getBoundingClientRect();
+   const parents=[];for(let el=ink.parentElement;el&&el!==paper;el=el.parentElement)parents.push({tag:el.tagName,overflow:getComputedStyle(el).overflow});
+   return {inkWidth:ir.width,inkHeight:ir.height,cellWidth:cr.width,inkLeft:ir.left,paperLeft:pr.left,
+    signatureOverflow:getComputedStyle(ink.parentElement).overflow,cellOverflow:getComputedStyle(cell).overflow,parents};
+  });
+  assert.ok(overlay.inkWidth>overlay.cellWidth*1.2,'Assinatura pode sobrepor as bordas do campo');
+  assert.equal(overlay.signatureOverflow,'visible','Assinatura não é recortada pelo contêiner');
+  assert.equal(overlay.cellOverflow,'visible','Célula permite sobreposição do traço');
+  assert.ok(overlay.parents.every(p=>!['hidden','clip','scroll','auto'].includes(p.overflow)),'Ancestrais não cortam assinatura');
+  assert.ok(overlay.inkLeft>overlay.paperLeft,'Assinatura não sai do papel A4');
+  if(engine===chromium&&width===390)await page.locator('#p118-paper').screenshot({path:join(output,'superior-assinatura-sobreposta.png')});
   assert.equal(await page.locator('#p118-ink').getAttribute('src'),applicantSrc,'Assinatura do requerente não foi alterada');
   assert.ok(await page.locator('#p118-supervisor-war').isDisabled(),'Dados do superior bloqueados após assinatura');
   assert.ok(await page.locator('#p118-export-open').isEnabled(),'PDF disponível ao concluir');
