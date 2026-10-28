@@ -622,13 +622,20 @@ body:has(#editor-layout:not([hidden])) .intro{display:none}
  #share.share-loading,#share.share-ready{transition:none!important}
 }
 @media print{#share.share-loading,#share.share-ready{background-image:none!important}}
-/* Carregamento na superfície dos botões, sem interferir no documento A4. */
-button.export-preparing{position:relative!important;overflow:hidden!important;cursor:progress!important;opacity:1!important}
-button.export-preparing::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:34%;background:#32b879;border-radius:3px;animation:export-moving 1s ease-in-out infinite;pointer-events:none}
-button.export-ready{border-color:#31a56e!important}
-@keyframes export-moving{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}
-@media(prefers-reduced-motion:reduce){button.export-preparing::after{animation:none;width:100%;opacity:.85}}
-@media print{button.export-preparing::after{display:none!important}}
+/* O progresso ocupa toda a altura do botão, atrás do texto. */
+button.export-preparing,button.export-ready{
+ position:relative!important;overflow:hidden!important;opacity:1!important;
+ background-image:linear-gradient(90deg,#126139,#197c49)!important;
+ background-repeat:no-repeat!important;background-position:left center!important;
+ background-size:var(--export-progress,0%) 100%!important;
+ background-color:#24242a!important;color:#fff!important;
+ transition:background-size .3s linear!important;
+}
+button.export-preparing{cursor:progress!important}
+button.export-preparing small,button.export-ready small{color:#fff!important;line-height:1.5}
+button.export-ready{border-color:#31a56e!important;--export-progress:100%}
+@media(prefers-reduced-motion:reduce){button.export-preparing,button.export-ready{transition:none!important}}
+@media print{button.export-preparing,button.export-ready{background-image:none!important}}
 
 /* Fluxo inicial em duas etapas: ações principais e seleção do tipo. */
 #start-choices[hidden],.document-type-chooser[hidden]{display:none!important}
@@ -788,12 +795,12 @@ body.p118-active .intro{display:none}
 <div id="p118-export-dialog" role="dialog" aria-modal="true" aria-labelledby="p118-export-title" hidden>
  <div class="p118-export-box">
   <h3 id="p118-export-title">Salvar ou compartilhar</h3>
-  <p>Na elaboração, o Word permite encaminhar o pedido para o superior preencher apenas o Encaminhamento 1. A assinatura é opcional. No fluxo de autorização, o arquivo final pode ser salvo ou compartilhado somente em PDF.</p>
+  <p>Escolha uma opção para preparar o arquivo. Depois, salve no dispositivo ou compartilhe pelo aplicativo de sua preferência. Após a autorização do superior, o documento final é disponibilizado em PDF.</p>
   <div class="p118-format-options">
    <button type="button" id="p118-export-pdf" aria-pressed="false"><strong>PDF</strong><small>Arquivo pronto para enviar ou imprimir</small></button>
-   <button type="button" id="p118-export-docx" aria-pressed="false"><strong>Word (.docx)</strong><small>O superior importa em “Autorizar DS/LP” no ElaboradorOFF</small></button>
+   <button type="button" id="p118-export-docx" aria-pressed="false"><strong>Enviar para superior assinar</strong><small>O superior importa o arquivo Word em “Autorizar DS/LP” no ElaboradorOFF, preenche o Encaminhamento 1 e assina.</small></button>
   </div>
-  <p id="p118-export-result" role="status" aria-live="polite">Selecione PDF ou Word.</p>
+  <p id="p118-export-result" role="status" aria-live="polite">Escolha PDF ou envio para assinatura do superior.</p>
   <div id="p118-export-actions" class="p118-export-actions" hidden>
    <button class="btn" type="button" id="p118-export-save">Salvar arquivo</button>
    <button class="btn alt" type="button" id="p118-export-share">Compartilhar</button>
@@ -1480,27 +1487,49 @@ function downloadPreparedPdf(file){
  link.href=url;link.download=file.name;document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
-/* Animação e texto pertencem somente ao botão acionado. */
+/* Cada botão mantém o seu próprio progresso e restaura seu texto ao terminar.
+   O avanço intermediário é estimado; 100% exige a conclusão da operação. */
 const exportLabels=new WeakMap();
+function setButtonPreparationProgress(button,value){
+ const state=exportLabels.get(button);if(!state)return;
+ state.progress=Math.max(state.progress,Math.min(100,Math.round(value)));
+ button.style.setProperty('--export-progress',state.progress+'%');
+ button.dataset.exportProgress=String(state.progress);
+}
 function beginButtonPreparation(button,label){
  if(!button||exportLabels.has(button))return false;
- exportLabels.set(button,button.innerHTML);
+ const state={html:button.innerHTML,ariaLabel:button.getAttribute('aria-label'),progress:0,timer:null};
+ exportLabels.set(button,state);
  button.classList.remove('export-ready');
  button.classList.add('export-preparing');
  button.setAttribute('aria-busy','true');
+ button.setAttribute('aria-label',label+' Progresso estimado.');
  if(button.querySelector('strong'))button.querySelector('strong').textContent=label;
  else button.textContent=label;
- button.disabled=true;
+ button.disabled=true;setButtonPreparationProgress(button,5);
+ const started=performance.now();
+ state.timer=setInterval(()=>setButtonPreparationProgress(button,Math.min(90,5+85*(1-Math.exp(-(performance.now()-started)/4500)))),150);
  return true;
 }
 function endButtonPreparation(button,ready=false){
  if(!button)return;
- const previous=exportLabels.get(button);
- if(previous!==undefined){button.innerHTML=previous;exportLabels.delete(button)}
+ const state=exportLabels.get(button);
+ if(state){
+  clearInterval(state.timer);button.innerHTML=state.html;
+  if(state.ariaLabel===null)button.removeAttribute('aria-label');else button.setAttribute('aria-label',state.ariaLabel);
+  exportLabels.delete(button);
+ }
  button.classList.remove('export-preparing');
  button.classList.toggle('export-ready',ready);
- button.removeAttribute('aria-busy');
- button.disabled=false;
+ if(ready){button.style.setProperty('--export-progress','100%');button.dataset.exportProgress='100'}
+ else{button.style.removeProperty('--export-progress');delete button.dataset.exportProgress}
+ button.removeAttribute('aria-busy');button.disabled=false;
+}
+async function completeButtonPreparation(button){
+ const state=exportLabels.get(button);if(!state)return;
+ clearInterval(state.timer);setButtonPreparationProgress(button,100);
+ await new Promise(resolve=>setTimeout(resolve,350));
+ if(exportLabels.get(button)===state)endButtonPreparation(button,true);
 }
 
 /* O verde é apenas uma estimativa visual até 92%. 100% é exclusivo do PDF pronto. */
@@ -2072,9 +2101,9 @@ function closeP118Export(){p118Dialog.hidden=true;el('p118-export-open').focus()
 function resetP118Export(){
  p118ExportFile=null;
  el('p118-export-docx').hidden=window.P118Workflow.isSupervisorMode();
- el('p118-export-result').textContent=window.P118Workflow.isSupervisorMode()?'Selecione PDF.':'Selecione PDF ou Word.';
+ el('p118-export-result').textContent=window.P118Workflow.isSupervisorMode()?'Selecione PDF.':'Escolha PDF ou envio para assinatura do superior.';
  el('p118-export-actions').hidden=true;
- for(const format of ['pdf','docx']){
+ for(const format of ['pdf','docx','save','share']){
   const button=el('p118-export-'+format);
   endButtonPreparation(button);
   button.classList.remove('export-ready');
@@ -2096,7 +2125,7 @@ async function prepareP118Export(format){
  const status=el('p118-export-result');
  const active=el('p118-export-'+format),formatLabel=format==='pdf'?'PDF':'Word';
  const buttons=['pdf','docx'].map(x=>el('p118-export-'+x));
- if(!beginButtonPreparation(active,'Preparando '+formatLabel+'...'))return;
+ if(!beginButtonPreparation(active,format==='docx'?'Preparando arquivo para o superior...':'Preparando PDF...'))return;
  buttons.forEach(button=>{button.disabled=true;button.classList.remove('export-ready');button.setAttribute('aria-pressed',String(button===active))});
  el('p118-export-actions').hidden=true;p118ExportFile=null;
  status.textContent='Preparando '+formatLabel+'...';
@@ -2109,7 +2138,8 @@ async function prepareP118Export(format){
   const filename='ElaboradorOFF - '+code+' '+grad+' '+name+'.'+(format==='pdf'?'pdf':'docx');
   const blob=format==='pdf'?await createP118Pdf():window.createP118WordDocument(await createP118WordSnapshot(),window.P118Workflow.snapshot(p118Signature));
   p118ExportFile=new File([blob],filename,{type:blob.type});
-  status.textContent='Arquivo pronto. Você pode salvar ou compartilhar.';
+  await completeButtonPreparation(active);
+  status.textContent=format==='docx'?'Arquivo pronto para o superior. Salve ou compartilhe o Word para ele importar no ElaboradorOFF.':'PDF pronto. Você pode salvar ou compartilhar.';
   el('p118-export-actions').hidden=false;
   const supported=!!navigator.share&&(!navigator.canShare||navigator.canShare({files:[p118ExportFile]}));
   el('p118-export-share').hidden=!supported;
@@ -2123,28 +2153,30 @@ async function prepareP118Export(format){
 
 el('p118-export-pdf').onclick=()=>prepareP118Export('pdf');
 el('p118-export-docx').onclick=()=>{if(!window.P118Workflow.isSupervisorMode())prepareP118Export('docx')};
-el('p118-export-save').onclick=()=>{
+el('p118-export-save').onclick=async()=>{
  if(!p118ExportFile)return;
  const button=el('p118-export-save');
- if(!beginButtonPreparation(button,'Iniciando download...'))return;
+ if(!beginButtonPreparation(button,'Preparando para salvar...'))return;
+ let saved=false;
  try{
-  downloadPreparedPdf(p118ExportFile);
+  downloadPreparedPdf(p118ExportFile);saved=true;
   el('p118-export-result').textContent='Download iniciado. Confira a pasta de downloads.';
  }catch(error){
   el('p118-export-result').textContent='Não foi possível iniciar o download: '+(error.message||error);
- }finally{setTimeout(()=>endButtonPreparation(button),650)}
+ }finally{if(saved)await completeButtonPreparation(button);else endButtonPreparation(button)}
 };
 el('p118-export-share').onclick=async()=>{
  if(!p118ExportFile)return;
  const button=el('p118-export-share');
- if(!beginButtonPreparation(button,'Abrindo compartilhamento...'))return;
+ if(!beginButtonPreparation(button,'Preparando para enviar...'))return;
+ let shared=false;
  try{
   if(!navigator.share)throw Error('Compartilhamento não disponível neste navegador.');
-  await navigator.share({files:[p118ExportFile],title:'PM P-118'});
+  await navigator.share({files:[p118ExportFile],title:'PM P-118'});shared=true;
   el('p118-export-result').textContent='Arquivo enviado ao compartilhamento do dispositivo.';
  }catch(error){
   if(error.name!=='AbortError')el('p118-export-result').textContent='Compartilhamento indisponível. Use Salvar arquivo.';
- }finally{endButtonPreparation(button)}
+ }finally{if(shared)await completeButtonPreparation(button);else endButtonPreparation(button)}
 };
 el('p118-print').onclick=async()=>{
  if(!validateP118())return;
