@@ -105,6 +105,7 @@ function imageRun(rel,widthMm,heightMm,id,description){
  const cx=Math.round(widthMm*36000),cy=Math.round(heightMm*36000);
  return '<w:r><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:docPr id="'+id+'" name="'+esc(description)+'"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="'+id+'" name="'+esc(description)+'"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="'+rel+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
 }
+function spacerXml(){return '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="55" w:lineRule="exact"/></w:pPr><w:r><w:rPr><w:sz w:val="2"/></w:rPr><w:t></w:t></w:r></w:p>'}
 function headingXml(){
  const half=WIDTH/2|0;
  const logo=imageRun('rId1',18,19,1,'Brasão do Estado de São Paulo');
@@ -167,8 +168,8 @@ function create(paper){
  if(tables.length!==4)throw Error('O formulário P-118 está incompleto.');
  let body=headingXml();
  // Espaços mínimos equivalentes à separação das tabelas na folha original.
- body+=paragraph('');
- for(const table of tables){body+=tableXml(table);body+=paragraph('')}
+ body+=spacerXml();
+ for(const table of tables){body+=tableXml(table);body+=spacerXml()}
  body+=approvalsXml(paper.querySelector('.p118-approvals'));
  const footer=paper.querySelector('.p118-footer');
  body+=paragraph(run(footer.textContent,{size:16}));
