@@ -153,6 +153,14 @@ for(const engine of [chromium,webkit]){
   assert.ok(applicantSrc?.startsWith('data:image/png;base64,'),'Assinatura do policial preservada');
   await page.locator('#p118-supervisor-decision').selectOption('sim');
   await page.locator('#p118-supervisor-date').fill('2026-11-04');
+  assert.equal(await page.locator('#p118-supervisor-out-date').textContent(),'04/11/26','Data do superior correta no A4');
+  const dateLegibility=await page.locator('#p118-supervisor-out-date').evaluate(node=>{
+   const css=getComputedStyle(node),parent=getComputedStyle(document.querySelector('#p118-paper'));
+   return {font:parseFloat(css.fontSize),base:parseFloat(parent.fontSize),wrap:css.whiteSpace,overflow:node.scrollWidth-node.clientWidth};
+  });
+  assert.ok(dateLegibility.font>dateLegibility.base,'Data do superior maior que a fonte padrão do P-118');
+  assert.equal(dateLegibility.wrap,'nowrap','Data permanece na mesma linha');
+  assert.ok(dateLegibility.overflow<=1,'Data não ultrapassa a margem da célula');
   await page.locator('#p118-supervisor-grade').selectOption('3º Sgt PM');
   await page.locator('#p118-supervisor-war').fill('fIlHo');
   await page.locator('#p118-supervisor-re').fill('9876543');
