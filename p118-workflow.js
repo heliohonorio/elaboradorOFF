@@ -21,7 +21,7 @@ function setup(){
  field('grade','Posto ou graduação *','<select id="'+prefix+'grade"><option value="">Selecione...</option>'+gradeOptions.map(g=>'<option>'+g+'</option>').join('')+'</select>')+
  field('war','Nome de guerra *',input('war','text',40,'Ex.: FILHO'))+
  field('re','RE - DC *',input('re','text',8,'000000-0'))+
- '<div class="p118-supervisor-sign"><label>Assinatura do superior imediato *</label><button type="button" class="btn alt" id="p118-supervisor-sign">✍ Assinar encaminhamento 1</button>'+
+ '<div class="p118-supervisor-sign"><label>Assinatura do superior imediato (opcional)</label><button type="button" class="btn alt" id="p118-supervisor-sign">✍ Assinar encaminhamento 1</button>'+
  '<p class="hint" id="p118-supervisor-sign-help">A assinatura será aplicada sobre a identificação do superior no primeiro encaminhamento, sem alterar a assinatura do solicitante.</p></div>';
  $('p118-form').querySelector('.actions').before(wrapper);
  const first=$('p118-paper').querySelector('.p118-approvals table');
@@ -91,8 +91,8 @@ function render(){
  'A assinatura ficará sobre a graduação, o nome de guerra e o RE no primeiro encaminhamento.';
  $('p118-export-docx').hidden=mode;
  $('p118-export-open').textContent=mode?'Salvar/compartilhar PDF':'Salvar/compartilhar arquivo';
- $('p118-export-open').disabled=mode&&!signature;
- $('p118-print').disabled=mode&&!signature;
+ $('p118-export-open').disabled=false;
+ $('p118-print').disabled=false;
  $('p118-sign').hidden=mode;
  $('p118-clear').hidden=mode;
 }
@@ -113,7 +113,7 @@ function resetApplicantVisibility(){
 }
 function restore(data){
  if(!data||data.kind!=='elaboradoroff-p118'||data.version!==1||!data.base||typeof data.base!=='object')throw Error('Word P-118 não reconhecido.');
- if(typeof data.signature!=='string'||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.signature))throw Error('Este P-118 não possui assinatura do policial. Solicite uma nova via assinada.');
+ if(data.signature!==null&&data.signature!==undefined&&(typeof data.signature!=='string'||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.signature)))throw Error('A assinatura do policial está em formato inválido.');
  clear();
  for(const key of baseFields){
   const control=$('p118-'+key);
@@ -122,7 +122,7 @@ function restore(data){
  }
  mode=true;
  baseOriginal=JSON.stringify(Object.fromEntries(baseFields.map(key=>[key,$('p118-'+key).value])));
- applicantOriginal=data.signature;
+ applicantOriginal=data.signature||null;
  resetApplicantVisibility();render();
  return applicantOriginal;
 }
@@ -143,7 +143,7 @@ function isApplicantUnchanged(){
 }
 function readyForPdf(){
  if(!mode)return true;
- if(!signature){$('p118-status').textContent='O superior precisa assinar o Encaminhamento 1 antes de finalizar.';return false}
+ if(!valid(true))return false;
  if(!isApplicantUnchanged()){$('p118-status').textContent='Os dados originais do solicitante não podem ser alterados. Solicite um novo documento.';return false}
  return true;
 }
