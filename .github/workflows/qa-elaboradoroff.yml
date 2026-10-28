@@ -33,6 +33,7 @@ jobs:
           node tests/share-progress.mjs
           node tests/document-types.mjs
           node tests/afastamento.mjs
+          node tests/p118-auto-scroll.mjs
       - name: Salvar evidências
         if: always()
         uses: actions/upload-artifact@v4
