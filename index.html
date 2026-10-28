@@ -764,7 +764,7 @@ body.p118-active .intro{display:none}
 <div id="p118-export-dialog" role="dialog" aria-modal="true" aria-labelledby="p118-export-title" hidden>
  <div class="p118-export-box">
   <h3 id="p118-export-title">Salvar ou compartilhar</h3>
-  <p>Escolha o formato. O PDF preserva a folha pronta. No Word (.docx), o superior poderá abrir o arquivo em “Editar documento pronto” no ElaboradorOFF e preencher a área de responsabilidade dele.</p>
+  <p>Na elaboração, o Word permite encaminhar o pedido assinado para o superior preencher apenas o Encaminhamento 1. Após a assinatura do superior, o documento final pode ser salvo ou compartilhado somente em PDF.</p>
   <div class="p118-format-options">
    <button type="button" id="p118-export-pdf" aria-pressed="false"><strong>PDF</strong><small>Arquivo pronto para enviar ou imprimir</small></button>
    <button type="button" id="p118-export-docx" aria-pressed="false"><strong>Word (.docx)</strong><small>O superior abre o arquivo em “Editar documento pronto” no ElaboradorOFF</small></button>
@@ -1939,7 +1939,9 @@ let p118ExportFile=null;
 const p118Dialog=el('p118-export-dialog');
 function closeP118Export(){p118Dialog.hidden=true;el('p118-export-open').focus()}
 function resetP118Export(){
- p118ExportFile=null;el('p118-export-result').textContent='Selecione PDF ou Word.';
+ p118ExportFile=null;
+ el('p118-export-docx').hidden=window.P118Workflow.isSupervisorMode();
+ el('p118-export-result').textContent=window.P118Workflow.isSupervisorMode()?'Selecione PDF.':'Selecione PDF ou Word.';
  el('p118-export-actions').hidden=true;
  for(const format of ['pdf','docx'])el('p118-export-'+format).setAttribute('aria-pressed','false');
 }
@@ -1947,18 +1949,24 @@ el('p118-export-open').onclick=()=>{
  normalizeP118Identification();renderP118();
  if(!validateP118())return;
  resetP118Export();p118Dialog.hidden=false;el('p118-export-pdf').focus();
+ if(window.P118Workflow.isSupervisorMode())prepareP118Export('pdf');
 };
 el('p118-export-close').onclick=closeP118Export;
 p118Dialog.addEventListener('click',event=>{if(event.target===p118Dialog)closeP118Export()});
 p118Dialog.addEventListener('keydown',event=>{if(event.key==='Escape')closeP118Export()});
 el('p118-form').addEventListener('submit',event=>{event.preventDefault();el('p118-export-open').click()});
 async function prepareP118Export(format){
+ if(window.P118Workflow.isSupervisorMode()&&format!=='pdf')throw Error('O superior só pode salvar ou compartilhar em PDF.');
+ if(format==='docx'&&!p118Signature){el('p118-export-result').textContent='Assine a solicitação antes de gerar o Word para o superior.';return}
  const status=el('p118-export-result'),buttons=['pdf','docx'].map(x=>el('p118-export-'+x));
  buttons.forEach(button=>{button.disabled=true;button.setAttribute('aria-pressed',String(button.id==='p118-export-'+format))});
  el('p118-export-actions').hidden=true;p118ExportFile=null;
  status.textContent='Preparando '+(format==='pdf'?'PDF':'Word')+'...';
  try{
-  const filename='PM-P-118-'+(el('p118-tipo').value==='lp'?'LP':'Dispensa-Servico')+'.'+(format==='pdf'?'pdf':'docx');
+  const code=el('p118-tipo').value==='lp'?'LP':'DS';
+   const grad=el('p118-grad').value.trim();
+   const name=normalizeP118Name(el('p118-nome').value).replace(/[\\/:*?"<>|\-]/g,' ').replace(/\s+/g,' ').trim();
+   const filename='ElaboradorOFF - '+code+' '+grad+' '+name+'.'+(format==='pdf'?'pdf':'docx');
   const blob=format==='pdf'?await createP118Pdf():window.createP118WordDocument(el('p118-paper'),window.P118Workflow.snapshot(p118Signature));
   p118ExportFile=new File([blob],filename,{type:blob.type});
   status.textContent='Arquivo pronto. Você pode salvar ou compartilhar.';
@@ -1969,7 +1977,7 @@ async function prepareP118Export(format){
  finally{buttons.forEach(button=>button.disabled=false)}
 }
 el('p118-export-pdf').onclick=()=>prepareP118Export('pdf');
-el('p118-export-docx').onclick=()=>prepareP118Export('docx');
+el('p118-export-docx').onclick=()=>{if(!window.P118Workflow.isSupervisorMode())prepareP118Export('docx')};
 el('p118-export-save').onclick=()=>{
  if(!p118ExportFile)return;
  downloadPreparedPdf(p118ExportFile);
