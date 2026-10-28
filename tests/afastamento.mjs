@@ -54,6 +54,7 @@ for(const engine of [chromium,webkit]){
  const path=join(output,'word-'+engine.name()+'-'+width+'.docx');
  await download.saveAs(path);
  const listing=execFileSync('unzip',['-Z1',path],{encoding:'utf8'});
+ execFileSync('python3',['-c','import zipfile,sys,xml.etree.ElementTree as ET; z=zipfile.ZipFile(sys.argv[1]); [ET.fromstring(z.read(name)) for name in z.namelist() if name.endswith((".xml",".rels"))]',path],{encoding:'utf8'});
  assert.match(listing,/word\/document.xml/,'Pacote Word válido');
  const xml=execFileSync('unzip',['-p',path,'word/document.xml'],{encoding:'utf8'});
  assert.match(xml,/Helio de Souza Pereira Filho/,'Nome presente como texto editável');
