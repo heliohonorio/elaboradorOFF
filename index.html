@@ -691,6 +691,9 @@ body:has(#editor-layout:not([hidden])) .intro{display:none}
 .p118-export-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
 .p118-export-actions .btn{flex:1;min-width:105px}
 #p118-export-result{min-height:20px}
+#p118-supervisor-fields[hidden]{display:none!important}
+#p118-supervisor-fields h3{margin:18px 0 11px;font-size:14px}
+#p118-paper .p118-supervisor-value{display:block;font:6.5pt/1.15 Arial,sans-serif;overflow-wrap:anywhere;white-space:pre-wrap;margin-top:.5mm}
 body.p118-active .intro{display:none}
 @media(max-width:820px){.p118-layout{grid-template-columns:1fr}.p118-pair{gap:10px}}
 @media print{
@@ -747,10 +750,10 @@ body.p118-active .intro{display:none}
 <div id="p118-export-dialog" role="dialog" aria-modal="true" aria-labelledby="p118-export-title" hidden>
  <div class="p118-export-box">
   <h3 id="p118-export-title">Salvar ou compartilhar</h3>
-  <p>Escolha o formato. O PDF mantém o documento pronto; o Word (.docx) permite que a Secretaria e os superiores preencham os campos restantes.</p>
+  <p>Escolha o formato. O PDF preserva a folha pronta. No Word (.docx), o superior poderá abrir o arquivo em “Editar documento pronto” no ElaboradorOFF e preencher a área de responsabilidade dele.</p>
   <div class="p118-format-options">
    <button type="button" id="p118-export-pdf" aria-pressed="false"><strong>PDF</strong><small>Arquivo pronto para enviar ou imprimir</small></button>
-   <button type="button" id="p118-export-docx" aria-pressed="false"><strong>Word (.docx)</strong><small>Documento com tabelas editáveis para complementar</small></button>
+   <button type="button" id="p118-export-docx" aria-pressed="false"><strong>Word (.docx)</strong><small>O superior abre o arquivo em “Editar documento pronto” no ElaboradorOFF</small></button>
   </div>
   <p id="p118-export-result" role="status" aria-live="polite">Selecione PDF ou Word.</p>
   <div id="p118-export-actions" class="p118-export-actions" hidden>
@@ -759,7 +762,7 @@ body.p118-active .intro{display:none}
   </div>
   <div class="p118-export-actions"><button class="btn alt" type="button" id="p118-export-close">Fechar</button></div>
  </div>
-</div><footer class="site-footer"><div class="footer-product">✧ ElaboradorOFF <span>· Elaboração administrativa</span></div><div class="footer-credit">Criado por: Sd PM Filho<span>Diretoria de Logística • Setor de Auditoria e Sistemas</span></div><div class="footer-counter" aria-live="polite">↗ Visitas totais <strong id="visit-count">—</strong></div></footer></main><script src="p118-word.js"></script><script>
+</div><footer class="site-footer"><div class="footer-product">✧ ElaboradorOFF <span>· Elaboração administrativa</span></div><div class="footer-credit">Criado por: Sd PM Filho<span>Diretoria de Logística • Setor de Auditoria e Sistemas</span></div><div class="footer-counter" aria-live="polite">↗ Visitas totais <strong id="visit-count">—</strong></div></footer></main><script src="p118-word.js"></script><script src="p118-workflow.js"></script><script>
 
 const ids=['grad','re','nome','guerra','cidade','emailUnidade','enderecoUnidade','data','numero','destinatario','assunto','email','relato'];const el=id=>document.getElementById(id);const steps=[...document.querySelectorAll('.step')];el('data').value=new Date().toLocaleDateString('en-CA');
 /* Entrada e importação local: os arquivos não são enviados a servidores para leitura. */
@@ -982,7 +985,16 @@ el('import-file').onchange=async()=>{
  if(file.size>12*1024*1024){el('import-status').textContent='O arquivo deve ter no máximo 12 MB.';return}
  el('import-status').textContent='Lendo o documento...';
  try{
-  const text=(await extractImportedText(file)).trim();
+  // O Word P-118 contém os campos estruturados para edição diretamente no ElaboradorOFF.
+   if(file.name.toLowerCase().endsWith('.docx')){
+    const p118=await window.P118Workflow.readWord(file,loadImportLibrary);
+    if(p118){
+     pendingImport={p118:true,data:p118};
+     el('import-status').textContent='PM P-118 identificado. Abrindo formulário para a Secretaria e os superiores.';
+     el('import-confirm').disabled=false;el('import-confirm').click();return;
+    }
+   }
+   const text=(await extractImportedText(file)).trim();
   if(text.length<25)throw Error('O arquivo não contém texto legível suficiente, mesmo após a leitura. Tente um PDF mais nítido.');
   pendingImport=interpretImportedText(text);
   if(!el('import-progress').hidden)setImportProgress(100,'Reconhecimento concluído!');
@@ -993,6 +1005,18 @@ el('import-file').onchange=async()=>{
 };
 el('import-confirm').onclick=()=>{
  if(!pendingImport)return;
+ if(pendingImport.p118){
+  const existing=el('p118-nome').value.trim();
+  if(existing&&!confirm('Substituir o P-118 atual pelo documento recebido?'))return;
+  const data=pendingImport.data;hideImportProgress();
+  p118Signature=window.P118Workflow.restore(data);
+  normalizeP118Identification();
+  openP118();
+  el('editor-mode').textContent='Editando P-118 recebido';
+  el('p118-status').textContent='Documento importado. Preencha os campos da Secretaria/P1 e dos superiores na seção 3.';
+  el('p118-supervisor-fields').scrollIntoView({block:'start',behavior:'smooth'});
+  return;
+ }
  if(ids.some(id=>el(id).value.trim()&&id!=='data')&&!confirm('Substituir os dados atuais pelos dados do documento importado?'))return;
  ids.forEach(id=>el(id).value='');
  signatureOverride=null;handwrittenSignature=null;updateSignButton();relatoOriginal=null;el('restore').hidden=true;
@@ -1715,24 +1739,18 @@ const p118Fields=['re','grad','nome','opm','local','pedido','dias','inicio','tip
 function p118Today(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function p118Date(value){if(!value)return '';const [y,m,d]=value.split('-');return d+'/'+m+'/'+y.slice(-2)}
 function normalizeP118Name(value){
- const minor=new Set(['da','de','do','das','dos','e']);
- const numerals=new Set(['ii','iii','iv','vi','vii','viii','ix']);
- const words=value.trim().replace(/\s+/g,' ').toLocaleLowerCase('pt-BR').split(/(\s+|-|')/);
- let position=0;
- return words.map(word=>{
-  if(!word||/^\s+$/.test(word)||word==='-'||word==="'")return word;
-  const start=position++;
-  if(start>0&&minor.has(word))return word;
-  if(numerals.has(word))return word.toLocaleUpperCase('pt-BR');
-  return word.charAt(0).toLocaleUpperCase('pt-BR')+word.slice(1);
- }).join('');
+ return value.trim().replace(/\s+/g,' ').toLocaleUpperCase('pt-BR');
+}
+function normalizeP118Local(value){
+ return normalizeMunicipality(value).toLocaleUpperCase('pt-BR');
 }
 function normalizeP118Identification(){
- for(const [id,formatter] of [['p118-nome',normalizeP118Name],['p118-local',normalizeMunicipality]]){
+ for(const [id,formatter] of [['p118-nome',normalizeP118Name],['p118-local',normalizeP118Local]]){
   const input=el(id),formatted=formatter(input.value);
   if(formatted!==input.value)input.value=formatted;
  }
 }
+
 function openP118(){
  documentMode='create';setDocumentType('afastamento');
  el('start-screen').hidden=true;el('editor-layout').hidden=true;el('editor-back').hidden=false;el('p118-editor').hidden=false;
@@ -1744,14 +1762,15 @@ function renderP118(){
  const v=key=>el('p118-'+key).value.trim(),lp=v('tipo')==='lp';
  el('p118-ds-field').hidden=lp;el('p118-lp-field').hidden=!lp;el('p118-boletim').required=lp;if(!lp)el('p118-boletim').setCustomValidity('');
  for(const key of ['re','grad','nome','opm','local','pedido','dias','inicio','motivo']){
-  let value=v(key);if(key==='nome')value=normalizeP118Name(value);if(key==='local')value=normalizeMunicipality(value);if(['pedido','inicio'].includes(key))value=p118Date(value);
+  let value=v(key);if(key==='nome')value=normalizeP118Name(value);if(key==='local')value=normalizeP118Local(value);if(['pedido','inicio'].includes(key))value=p118Date(value);
   if(key==='dias'&&value)value=value.padStart(2,'0');
   el('p118-out-'+key).textContent=value;
  }
  el('p118-check-ds').textContent=lp?'':'X';el('p118-check-lp').textContent=lp?'X':'';
  el('p118-out-ordem').textContent=lp?'___/6':(v('ordem')||'___')+'/6';
  el('p118-out-boletim').textContent=lp?v('boletim'):'';
- const ink=el('p118-ink');ink.hidden=!p118Signature;if(p118Signature)ink.src=p118Signature;else ink.removeAttribute('src');
+ window.P118Workflow.render();
+  const ink=el('p118-ink');ink.hidden=!p118Signature;if(p118Signature)ink.src=p118Signature;else ink.removeAttribute('src');
  el('p118-sign').textContent=p118Signature?'✍ Alterar assinatura':'✍ Assinar';
  el('p118-status').textContent='';
  if(currentDocumentType==='afastamento')document.title='ElaboradorOFF — Dispensa Serviço/LP';
@@ -1787,6 +1806,7 @@ async function createP118Pdf(){
 }
 p118Fields.forEach(key=>el('p118-'+key).addEventListener('input',()=>{
  el('p118-'+key).setCustomValidity('');
+ if(key==='nome'||key==='local')normalizeP118Identification();
  if(key==='re'){const field=el('p118-re'),digits=field.value.replace(/\D/g,'').slice(0,7);field.value=digits.length>6?digits.slice(0,6)+'-'+digits.slice(6):digits}
  renderP118();
 }));
@@ -1815,7 +1835,7 @@ async function prepareP118Export(format){
  status.textContent='Preparando '+(format==='pdf'?'PDF':'Word')+'...';
  try{
   const filename='PM-P-118-'+(el('p118-tipo').value==='lp'?'LP':'Dispensa-Servico')+'.'+(format==='pdf'?'pdf':'docx');
-  const blob=format==='pdf'?await createP118Pdf():window.createP118WordDocument(el('p118-paper'));
+  const blob=format==='pdf'?await createP118Pdf():window.createP118WordDocument(el('p118-paper'),window.P118Workflow.snapshot(p118Signature));
   p118ExportFile=new File([blob],filename,{type:blob.type});
   status.textContent='Arquivo pronto. Você pode salvar ou compartilhar.';
   el('p118-export-actions').hidden=false;
@@ -1845,8 +1865,9 @@ el('p118-print').onclick=()=>{if(validateP118())window.print()};
 el('p118-sign').onclick=()=>el('sign-open').click();
 el('p118-clear').onclick=()=>{
  if(!confirm('Limpar os campos e a assinatura deste formulário?'))return;
- el('p118-form').reset();p118Fields.forEach(key=>el('p118-'+key).setCustomValidity(''));resetP118Export();el('p118-pedido').value=p118Today();p118Signature=null;renderP118();
+ el('p118-form').reset();p118Fields.forEach(key=>el('p118-'+key).setCustomValidity(''));resetP118Export();window.P118Workflow.clear();el('p118-pedido').value=p118Today();p118Signature=null;renderP118();
 };
 for(const id of ['p118-nome','p118-local'])el(id).addEventListener('blur',()=>{normalizeP118Identification();renderP118()});
+window.P118Workflow.setup();
 window.addEventListener('resize',fitP118);
 </script></body></html>
