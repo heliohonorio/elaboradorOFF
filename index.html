@@ -719,7 +719,15 @@ body.p118-active .intro{display:none}
  body.p118-active #p118-frame{height:297mm!important;width:210mm!important;padding:0!important;margin:0!important;overflow:hidden!important}
  body.p118-active #p118-paper{transform:none!important;margin:0!important;break-after:avoid!important}
 }
-</style></head><body><main class="app"><header class="header"><div class="brand"><span class="brand-icon"><svg aria-hidden="true" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4M9 12h6M9 15.5h6M9 19h3"/></svg></span> <span class="brand-name">Elaborador<strong>OFF</strong></span></div><div class="header-note">Documentos administrativos, sem complicação.</div></header><div class="intro"><small>ELABORAÇÃO INTELIGENTE</small><h1>Elabore seus documentos com facilidade.</h1><p>Preencha, elabore com IA e salve o documento para compartilhar.</p></div><section class="start-screen" id="start-screen" aria-labelledby="start-heading"><div class="start-heading"><span class="start-eyebrow" id="start-eyebrow">BEM-VINDO AO ELABORADOROFF</span><h2 id="start-heading" tabindex="-1">O que deseja fazer?</h2><p id="start-description">Crie um documento ou edite um arquivo existente.</p></div><select id="document-type" hidden aria-hidden="true" tabindex="-1"><option value="parte">Parte</option><option value="afastamento">Dispensa Serviço/LP</option><option value="memorando">Memorando</option><option value="oficio">Ofício</option></select><div class="start-choices" id="start-choices"><button type="button" id="start-create" class="start-choice"><span class="start-icon">＋</span><span><strong>Criar documento</strong></span><span aria-hidden="true">→</span></button><button type="button" id="start-import" class="start-choice"><span class="start-icon">✎</span><span><strong>Editar documento pronto</strong><small>Importar PDF, Word ou TXT e preencher os campos.</small></span><span aria-hidden="true">→</span></button></div><div id="document-type-chooser" class="document-type-chooser" hidden><button type="button" id="choose-document-back" class="chooser-back">← Voltar</button><div class="type-options" role="group" aria-label="Tipo de documento"><button type="button" class="type-option" data-document-type="parte"><span class="type-option-number" aria-hidden="true">01</span><span class="type-option-copy"><strong>Parte</strong><small>Comunicações e relatos administrativos.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button><button type="button" class="type-option" data-document-type="afastamento"><span class="type-option-number" aria-hidden="true">02</span><span class="type-option-copy"><strong>Dispensa Serviço/LP</strong><small>Solicitação de afastamento · PM P-118.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button><button type="button" class="type-option" data-document-type="memorando"><span class="type-option-number" aria-hidden="true">03</span><span class="type-option-copy"><strong>Memorando</strong><small>Comunicações internas e administrativas.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button><button type="button" class="type-option" data-document-type="oficio"><span class="type-option-number" aria-hidden="true">04</span><span class="type-option-copy"><strong>Ofício</strong><small>Correspondências oficiais e institucionais.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button></div></div><div id="import-panel" class="import-panel" hidden><h3>Selecionar documento</h3><p>Escolha um arquivo PDF (inclusive digitalizado, até 5 páginas com OCR), Word (.doc e .docx) ou TXT. Confira os dados identificados antes de salvar.</p><label for="import-file" class="import-select-button"><span aria-hidden="true">↑</span><span>Selecionar documento do dispositivo<small>Toque aqui para escolher um PDF, Word (.doc/.docx) ou TXT</small></span></label><input id="import-file" class="import-file-input" type="file" accept=".pdf,.doc,.docx,.txt,application/msword,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"><p id="import-selected" class="import-selected" hidden></p><p id="import-status" role="status" aria-live="polite"></p><div id="import-progress" class="ai-progress" hidden><div class="ai-progress-top"><span id="import-progress-label">Preparando documento...</span><span id="import-progress-percent">0%</span></div><div class="ai-progress-track" id="import-progress-track" role="progressbar" aria-label="Progresso do reconhecimento do documento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ai-progress-fill" id="import-progress-fill"></div></div><small>Reconhecimento de texto em andamento. Aguarde a conclusão.</small></div><div class="import-actions"><button type="button" class="btn alt" id="import-back">← Voltar</button><button type="button" class="btn" id="import-confirm" hidden disabled>Carregar no formulário</button></div></div></section><div class="editor-back" id="editor-back" hidden><button type="button" class="btn alt" id="return-home">← Página inicial</button><span id="editor-mode"></span></div><div class="layout" id="editor-layout" hidden><section class="panel form"><h2>Nova parte administrativa</h2><nav class="wizard-nav" aria-label="Etapas"><button type="button" class="stage-tab active" data-stage="0">1. Identificação</button><button type="button" class="stage-tab" data-stage="1">2. Destinatário</button><button type="button" class="stage-tab" data-stage="2">3. Elaboração</button></nav><div id="wizard">
+</style></head><body><main class="app"><header class="header"><div class="brand"><span class="brand-icon"><svg aria-hidden="true" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path d="M14 3.5V8h4M9 12h6M9 15.5h6M9 19h3"/></svg></span> <span class="brand-name">Elaborador<strong>OFF</strong></span></div><div class="header-note">Documentos administrativos, sem complicação.</div></header><div class="intro"><small>ELABORAÇÃO INTELIGENTE</small><h1>Elabore seus documentos com facilidade.</h1><p>Preencha, elabore com IA e salve o documento para compartilhar.</p></div><section class="start-screen" id="start-screen" aria-labelledby="start-heading"><div class="start-heading"><span class="start-eyebrow" id="start-eyebrow">BEM-VINDO AO ELABORADOROFF</span><h2 id="start-heading" tabindex="-1">O que deseja fazer?</h2><p id="start-description">Crie um documento ou edite um arquivo existente.</p></div><select id="document-type" hidden aria-hidden="true" tabindex="-1"><option value="parte">Parte</option><option value="afastamento">Dispensa Serviço/LP</option><option value="memorando">Memorando</option><option value="oficio">Ofício</option></select><div class="start-choices" id="start-choices"><button type="button" id="start-create" class="start-choice"><span class="start-icon">＋</span><span><strong>Criar documento</strong></span><span aria-hidden="true">→</span></button><button type="button" id="start-import" class="start-choice"><span class="start-icon">✎</span><span><strong>Editar documento pronto</strong><small>Importar Parte, Memorando ou Ofício.</small></span><span aria-hidden="true">→</span></button><button type="button" id="start-authorize" class="start-choice"><span class="start-icon" aria-hidden="true">✓</span><span><strong>Autorizar DS/LP</strong><small>Superior imediato · Encaminhamento 1 do PM P-118.</small></span><span aria-hidden="true">→</span></button></div><div id="document-type-chooser" class="document-type-chooser" hidden><button type="button" id="choose-document-back" class="chooser-back">← Voltar</button><div class="type-options" role="group" aria-label="Tipo de documento"><button type="button" class="type-option" data-document-type="parte"><span class="type-option-number" aria-hidden="true">01</span><span class="type-option-copy"><strong>Parte</strong><small>Comunicações e relatos administrativos.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button><button type="button" class="type-option" data-document-type="afastamento"><span class="type-option-number" aria-hidden="true">02</span><span class="type-option-copy"><strong>Dispensa Serviço/LP</strong><small>Solicitação de afastamento · PM P-118.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button><button type="button" class="type-option" data-document-type="memorando"><span class="type-option-number" aria-hidden="true">03</span><span class="type-option-copy"><strong>Memorando</strong><small>Comunicações internas e administrativas.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button><button type="button" class="type-option" data-document-type="oficio"><span class="type-option-number" aria-hidden="true">04</span><span class="type-option-copy"><strong>Ofício</strong><small>Correspondências oficiais e institucionais.</small></span><span class="type-option-arrow" aria-hidden="true">→</span></button></div></div><div id="authorize-panel" class="import-panel" hidden>
+ <h3>Importar solicitação DS/LP</h3>
+ <p>Selecione o Word (.docx) encaminhado pelo policial, gerado no ElaboradorOFF e assinado. O sistema abrirá automaticamente <strong>somente o Encaminhamento 1</strong> para o superior imediato.</p>
+ <button type="button" id="authorize-select" class="import-select-button"><span aria-hidden="true">↑</span><span>Importar documento Word<small>Selecionar arquivo .docx do dispositivo</small></span></button>
+ <input id="authorize-file" class="import-file-input" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+ <p id="authorize-selected" class="import-selected" hidden></p>
+ <p id="authorize-status" role="status" aria-live="polite"></p>
+ <div class="import-actions"><button type="button" class="btn alt" id="authorize-back">← Voltar</button></div>
+</div><div id="import-panel" class="import-panel" hidden><h3>Selecionar documento</h3><p>Escolha um arquivo PDF (inclusive digitalizado, até 5 páginas com OCR), Word (.doc e .docx) ou TXT. Confira os dados identificados antes de salvar.</p><label for="import-file" class="import-select-button"><span aria-hidden="true">↑</span><span>Selecionar documento do dispositivo<small>Toque aqui para escolher um PDF, Word (.doc/.docx) ou TXT</small></span></label><input id="import-file" class="import-file-input" type="file" accept=".pdf,.doc,.docx,.txt,application/msword,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"><p id="import-selected" class="import-selected" hidden></p><p id="import-status" role="status" aria-live="polite"></p><div id="import-progress" class="ai-progress" hidden><div class="ai-progress-top"><span id="import-progress-label">Preparando documento...</span><span id="import-progress-percent">0%</span></div><div class="ai-progress-track" id="import-progress-track" role="progressbar" aria-label="Progresso do reconhecimento do documento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ai-progress-fill" id="import-progress-fill"></div></div><small>Reconhecimento de texto em andamento. Aguarde a conclusão.</small></div><div class="import-actions"><button type="button" class="btn alt" id="import-back">← Voltar</button><button type="button" class="btn" id="import-confirm" hidden disabled>Carregar no formulário</button></div></div></section><div class="editor-back" id="editor-back" hidden><button type="button" class="btn alt" id="return-home">← Página inicial</button><span id="editor-mode"></span></div><div class="layout" id="editor-layout" hidden><section class="panel form"><h2>Nova parte administrativa</h2><nav class="wizard-nav" aria-label="Etapas"><button type="button" class="stage-tab active" data-stage="0">1. Identificação</button><button type="button" class="stage-tab" data-stage="1">2. Destinatário</button><button type="button" class="stage-tab" data-stage="2">3. Elaboração</button></nav><div id="wizard">
 <div class="step visible"><label for="grad">1. Posto / Graduação</label><select id="grad"><option value="">Selecione...</option><option>Sd PM</option><option>Cb PM</option><option>3º Sgt PM</option><option>2º Sgt PM</option><option>1º Sgt PM</option><option>Subten PM</option><option>2º Ten PM</option><option>1º Ten PM</option><option>Cap PM</option><option>Maj PM</option><option>Ten Cel PM</option><option>Cel PM</option></select></div>
 <div class="step"><label for="re">2. Registro Estatístico (RE)</label><input id="re" placeholder="000000-0" inputmode="numeric" maxlength="8" autocomplete="off" aria-describedby="re-ajuda"><small id="re-ajuda">Informe os 6 números do RE e o dígito verificador. Ex.: 153115-8.</small></div>
 <div class="step"><label for="nome">3. Nome completo</label><input id="nome" placeholder="Nome do signatário" autocomplete="name"></div>
@@ -813,11 +821,11 @@ function showStartChoices(){
  el('start-choices').hidden=false;
  el('document-type-chooser').hidden=true;
  el('start-heading').textContent='O que deseja fazer?';
- el('start-description').textContent='Crie um documento ou edite um arquivo existente.';
+ el('start-description').textContent='Crie, edite ou autorize um documento.';
  el('start-eyebrow').textContent='BEM-VINDO AO ELABORADOROFF';
 }
 el('start-create').onclick=()=>{
- el('import-panel').hidden=true;
+ el('import-panel').hidden=true;el('authorize-panel').hidden=true;
  el('start-choices').hidden=true;
  el('document-type-chooser').hidden=false;
  el('start-heading').textContent='Qual tipo de documento?';
@@ -833,7 +841,36 @@ document.querySelectorAll('.type-option').forEach(button=>{
   openEditor('create');
  };
 });
-el('start-import').onclick=()=>{el('import-panel').hidden=false;el('import-file').focus()};
+el('start-import').onclick=()=>{
+ el('authorize-panel').hidden=true;
+ el('import-panel').hidden=false;
+ el('import-file').focus();
+};
+function clearAuthorizeSelection(){
+ el('authorize-file').value='';
+ el('authorize-selected').hidden=true;
+ el('authorize-selected').textContent='';
+ el('authorize-status').textContent='';
+}
+el('start-authorize').onclick=()=>{
+ el('start-choices').hidden=true;
+ el('document-type-chooser').hidden=true;
+ el('import-panel').hidden=true;
+ clearAuthorizeSelection();
+ el('authorize-panel').hidden=false;
+ el('start-heading').textContent='Autorizar DS/LP';
+ el('start-description').textContent='Importe o Word assinado pelo policial para preencher o Encaminhamento 1.';
+ el('start-eyebrow').textContent='SUPERIOR IMEDIATO';
+ el('authorize-select').focus({preventScroll:true});
+ el('authorize-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+el('authorize-select').onclick=()=>el('authorize-file').click();
+el('authorize-back').onclick=()=>{
+ clearAuthorizeSelection();
+ el('authorize-panel').hidden=true;
+ showStartChoices();
+ el('start-authorize').focus({preventScroll:true});
+};
 el('import-back').onclick=()=>{el('import-panel').hidden=true;el('import-status').textContent='';el('import-file').value='';el('import-selected').hidden=true;hideImportProgress()};
 function resetElaboradorForms(){
  window.P118Workflow.clear();el('p118-form').reset();p118Signature=null;
@@ -850,7 +887,7 @@ function resetElaboradorForms(){
  });
  signatureOverride=null;handwrittenSignature=null;metaOverride=null;
  pendingImport=null;documentMode='create';currentDocumentType='parte';
- el('document-type').value='parte';el('import-file').value='';
+ el('document-type').value='parte';el('import-file').value='';clearAuthorizeSelection();
  el('import-selected').hidden=true;el('import-status').textContent='';
  el('ai-status').textContent='';el('relato').value='';
  relatoOriginal=null;el('restore').hidden=true;el('p118-status').textContent='';
@@ -860,7 +897,7 @@ el('return-home').onclick=()=>{
  resetElaboradorForms();
  el('p118-editor').hidden=true;document.body.classList.remove('p118-active');
  el('editor-layout').hidden=true;el('editor-back').hidden=true;
- el('start-screen').hidden=false;el('import-panel').hidden=true;
+ el('start-screen').hidden=false;el('import-panel').hidden=true;el('authorize-panel').hidden=true;
  showStartChoices();window.scrollTo({top:0,behavior:'smooth'});
 };
 async function loadImportLibrary(url,check){
@@ -1020,22 +1057,47 @@ function interpretImportedText(text){
  if(sigIdx>=0){values.nome=sigLines[sigIdx];const next=sigLines[sigIdx+1]||'';const grad=matchGrad(next);if(grad&&!values.grad)values.grad=grad;if(grad&&next.slice(grad.length).trim()&&!values.re)values.funcao=next.slice(grad.length).trim()}
  return {values,recognized:Object.keys(values).filter(k=>values[k]),raw:text};
 }
+el('authorize-file').onchange=async()=>{
+ const file=el('authorize-file').files?.[0],status=el('authorize-status');
+ el('authorize-selected').hidden=!file;
+ el('authorize-selected').textContent=file?'Arquivo selecionado: '+file.name:'';
+ if(!file){status.textContent='';return}
+ if(!file.name.toLocaleLowerCase('pt-BR').endsWith('.docx')){
+  status.textContent='Selecione um documento Word (.docx) gerado pelo ElaboradorOFF.';return;
+ }
+ if(file.size>12*1024*1024){status.textContent='O arquivo deve ter no máximo 12 MB.';return}
+ el('authorize-select').disabled=true;
+ status.textContent='Lendo solicitação assinada...';
+ try{
+  const data=await window.P118Workflow.readWord(file,loadImportLibrary);
+  if(!data)throw Error('Este Word não contém dados do PM P-118 gerado pelo ElaboradorOFF.');
+  resetElaboradorForms();
+  p118Signature=window.P118Workflow.restore(data);
+  normalizeP118Identification();
+  openP118();
+  el('editor-mode').textContent='Autorizando DS/LP';
+  el('p118-status').textContent='Solicitação importada. Preencha somente o Encaminhamento 1 do superior imediato.';
+  requestAnimationFrame(()=>el('p118-supervisor-fields').scrollIntoView({behavior:'smooth',block:'start'}));
+ }catch(error){
+  status.textContent='Não foi possível abrir para autorização: '+(error.message||error);
+ }finally{
+  el('authorize-select').disabled=false;
+ }
+};
 el('import-file').onchange=async()=>{
  const file=el('import-file').files?.[0];pendingImport=null;el('import-confirm').disabled=true;hideImportProgress();el('import-selected').hidden=!file;el('import-selected').textContent=file?'Arquivo selecionado: '+file.name:'';
  if(!file)return;
  if(file.size>12*1024*1024){el('import-status').textContent='O arquivo deve ter no máximo 12 MB.';return}
  el('import-status').textContent='Lendo o documento...';
  try{
-  // O Word P-118 contém os campos estruturados para edição diretamente no ElaboradorOFF.
-   if(file.name.toLowerCase().endsWith('.docx')){
-    const p118=await window.P118Workflow.readWord(file,loadImportLibrary);
-    if(p118){
-     pendingImport={p118:true,data:p118};
-     el('import-status').textContent='PM P-118 identificado. Abrindo somente o Encaminhamento 1.';
-     el('import-confirm').disabled=false;el('import-confirm').click();return;
-    }
+  if(file.name.toLowerCase().endsWith('.docx')){
+   const p118=await window.P118Workflow.readWord(file,loadImportLibrary);
+   if(p118){
+    el('import-status').textContent='Este arquivo é um PM P-118. Volte à tela inicial e selecione “Autorizar DS/LP”.';
+    return;
    }
-   const text=(await extractImportedText(file)).trim();
+  }
+  const text=(await extractImportedText(file)).trim();
   if(text.length<25)throw Error('O arquivo não contém texto legível suficiente, mesmo após a leitura. Tente um PDF mais nítido.');
   pendingImport=interpretImportedText(text);
   if(!el('import-progress').hidden)setImportProgress(100,'Reconhecimento concluído!');
@@ -1046,18 +1108,6 @@ el('import-file').onchange=async()=>{
 };
 el('import-confirm').onclick=()=>{
  if(!pendingImport)return;
- if(pendingImport.p118){
-  const existing=el('p118-nome').value.trim();
-  if(existing&&!confirm('Substituir o P-118 atual pelo documento recebido?'))return;
-  const data=pendingImport.data;hideImportProgress();
-  p118Signature=window.P118Workflow.restore(data);
-  normalizeP118Identification();
-  openP118();
-  el('editor-mode').textContent='Editando P-118 recebido';
-  el('p118-status').textContent='Dados do solicitante bloqueados. Preencha apenas o Encaminhamento 1.';
-  el('p118-supervisor-fields').scrollIntoView({block:'start',behavior:'smooth'});
-  return;
- }
  if(ids.some(id=>el(id).value.trim()&&id!=='data')&&!confirm('Substituir os dados atuais pelos dados do documento importado?'))return;
  ids.forEach(id=>el(id).value='');
  signatureOverride=null;handwrittenSignature=null;updateSignButton();relatoOriginal=null;el('restore').hidden=true;
