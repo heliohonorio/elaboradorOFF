@@ -120,7 +120,15 @@ for(const engine of [chromium,webkit]){
   assert.equal(await page.locator('#p118-ink').getAttribute('src'),null,'Ao voltar, limpa a assinatura');
   await page.locator('#start-import').click();
   await page.locator('#import-file').setInputFiles(path);
+  await page.locator('#import-status').filter({hasText:'Autorizar DS/LP'}).waitFor({timeout:15000});
+  assert.ok(await page.locator('#p118-editor').isHidden(),'Editor genérico não abre formulário de autorização');
+  await page.locator('#import-back').click();
+  await page.locator('#start-authorize').click();
+  assert.ok(await page.locator('#authorize-panel').isVisible(),'Autorização exclusiva visível');
+  await page.locator('#authorize-file').setInputFiles(path);
   await page.locator('#p118-supervisor-fields').waitFor({state:'visible',timeout:15000});
+  assert.equal(await page.locator('#editor-mode').textContent(),'Autorizando DS/LP','Fluxo específico aberto');
+  assert.ok(await page.locator('#start-screen').isHidden(),'Tela de seleção fechada após a importação');
   assert.equal(await page.locator('#p118-out-nome').innerText(),'HELIO DE SOUZA PEREIRA FILHO');
   assert.equal(await page.locator('#p118-out-local').innerText(),'SÃO PAULO');
   assert.ok(await page.locator('#p118-nome').isDisabled(),'Solicitante não pode ser editado');
