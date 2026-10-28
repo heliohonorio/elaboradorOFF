@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium, webkit } from 'playwright';
 
-const baseUrl = 'http://127.0.0.1:8765/';
+const baseUrl = process.env.TEST_BASE_URL || 'http://127.0.0.1:8765/';
 const documents = [
   { type: 'parte', label: 'Parte', needsAddress: false },
   { type: 'oficio', label: 'Ofício', needsAddress: true },
@@ -43,7 +43,7 @@ for (const engine of [chromium, webkit]) {
       await page.locator('#start-create').click();
       check(await page.locator('#document-type-chooser').isVisible(), 'Etapa de seleção abriu');
       check(await page.locator('#start-choices').isHidden(), 'Botões iniciais ocultos');
-      check(await page.locator('.type-option').count() === 3, 'Exatamente três tipos');
+      check(await page.locator('.type-option').count() === 4, 'Quatro tipos de documento');
       check(await page.locator('.type-option').first().evaluate(el => el === document.activeElement), 'Foco de teclado na primeira opção');
 
       await page.locator('#choose-document-back').click();
