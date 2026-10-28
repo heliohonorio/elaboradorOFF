@@ -38,6 +38,8 @@ for (const engine of [chromium, webkit]) {
       check(await page.locator('#start-choices').isVisible(), 'Tela inicial acessível');
       check(await page.locator('#document-type-chooser').isHidden(), 'Escolha do tipo só após Criar');
       check(await page.locator('#document-type').isHidden(), 'Select antigo não está visível');
+      check(await page.locator('#start-authorize').isVisible(), 'Botão Autorizar DS/LP disponível na tela inicial');
+      check(await page.locator('#authorize-panel').isHidden(), 'Importador do superior inicialmente oculto');
       check((await page.locator('#start-heading').textContent()).trim() === 'O que deseja fazer?', 'Título inicial correto');
 
       await page.locator('#start-create').click();
@@ -55,8 +57,18 @@ for (const engine of [chromium, webkit]) {
       check(await page.locator('#start-choices').isVisible(), 'Voltar reabre o início');
       check(await page.locator('#document-type-chooser').isHidden(), 'Voltar fecha a seleção');
 
+      await page.locator('#start-authorize').click();
+      check(await page.locator('#authorize-panel').isVisible(), 'Importador DS/LP exclusivo abriu');
+      check(await page.locator('#import-panel').isHidden(), 'Importação geral não aparece para superior');
+      check(await page.locator('#start-choices').isHidden(), 'Opções iniciais recolhidas durante autorização');
+      check(await page.locator('#authorize-select').isVisible(), 'Botão para selecionar arquivo Word');
+      check((await page.locator('#authorize-file').getAttribute('accept')).includes('.docx'), 'Aceita apenas Word .docx');
+      await page.locator('#authorize-back').click();
+      check(await page.locator('#authorize-panel').isHidden(), 'Voltar fecha a autorização');
+      check(await page.locator('#start-choices').isVisible(), 'Voltar restaura a tela inicial');
       await page.locator('#start-import').click();
       check(await page.locator('#import-panel').isVisible(), 'Importar existente permanece funcional');
+      check(await page.locator('#authorize-panel').isHidden(), 'Editar documento não mistura o fluxo de autorização');
       await page.locator('#import-back').click();
       check(await page.locator('#import-panel').isHidden(), 'Voltar da importação permanece funcional');
 
