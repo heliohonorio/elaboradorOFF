@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
+async function checkSignDialog(page,type){
+ await page.locator('#sign-open').click();
+ const metrics=await page.locator('#sign-pad').evaluate(node=>{
+  const rect=node.getBoundingClientRect();
+  return {width:rect.width,height:rect.height,ratio:node.width/node.height,visual:rect.width/rect.height};
+ });
+ assert.ok(metrics.width>800&&metrics.height>330,'Campo de assinatura ampliado para '+type);
+ assert.ok(Math.abs(metrics.ratio-metrics.visual)<.02,'Traço sem distorção em '+type);
+ await page.locator('#sign-cancel').click();
+}
 for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
  const browser=await browserType.launch({headless:true});
  const page=await browser.newPage({viewport:{width:1440,height:1000}});
@@ -16,6 +26,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   assert.equal(await page.locator('#address-step').isVisible(),false,'endereço não aparece na Parte');
   assert.equal(await page.locator('#crest-unit-address').isVisible(),false,'endereço não é impresso na Parte');
   assert.match(await page.locator('#meta').innerText(),/PARTE Nº/);
+  await checkSignDialog(page,'Parte');
 
   await page.locator('#return-home').click();
   await page.locator('#start-create').click();
@@ -28,6 +39,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.locator('#numero').fill('DL-009/2026');
   await page.evaluate(()=>{const field=document.getElementById('assunto');field.value='Teste inicial';field.dispatchEvent(new Event('input',{bubbles:true}))});
   assert.match(await page.locator('#meta').innerText(),/OFÍCIO Nº DL-009\/2026/);
+  await checkSignDialog(page,'Ofício');
   assert.equal(await page.locator('#crest-unit-address').innerText(),address);
   const order=await page.evaluate(()=>{
    const parent=document.getElementById('crest-unit-email').parentElement;
@@ -66,6 +78,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   assert.equal(await page.locator('#address-step').isVisible(),false,'Memorando não mostra endereço');
   assert.equal(await page.locator('#crest-unit-address').isVisible(),false,'Memorando não imprime endereço');
   assert.match(await page.locator('#meta').innerText(),/MEMORANDO Nº/);
+  await checkSignDialog(page,'Memorando');
   assert.equal(await page.locator('#enderecoUnidade').evaluate(e=>e.required),false);
 
   await page.evaluate(()=>{const field=document.getElementById('relato');field.value=Array.from({length:70},(_,i)=>(i+1)+'. Parágrafo para testar a paginação sem alterar fonte e margens.').join('\n');field.dispatchEvent(new Event('input',{bubbles:true}))});

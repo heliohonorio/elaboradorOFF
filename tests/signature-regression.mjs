@@ -86,6 +86,45 @@ for(const scenario of [
   assert.equal(metrics.rendered.length,1,'PDF não gerou exatamente uma folha');
   nearRatio(metrics.rendered[0],metrics.sourceRatio,'assinatura rasterizada no PDF');
   assert.ok(metrics.pdfSize>15000,'PDF gerado está vazio');
+  // Mesmo diálogo compartilhado por Parte, Memorando, Ofício e PM P-118.
+  await page.locator('#sign-open').click();
+  assert.ok(await page.locator('#sign-dialog').isVisible(),'Janela de assinatura aberta');
+  const pad=await page.locator('#sign-pad').evaluate(canvas=>{
+   const rect=canvas.getBoundingClientRect(),box=document.querySelector('.sign-box').getBoundingClientRect();
+   return {width:rect.width,height:rect.height,rasterWidth:canvas.width,
+    rasterHeight:canvas.height,boxWidth:box.width,viewportWidth:innerWidth,viewportHeight:innerHeight};
+  });
+  assert.ok(pad.width >= (scenario.label==='iphone'?310:750),'Área de assinatura deve ficar mais larga');
+  assert.ok(pad.height >= (scenario.label==='iphone'?270:330),'Área de assinatura deve ficar mais alta');
+  assert.ok(Math.abs(pad.rasterWidth/pad.rasterHeight-pad.width/pad.height)<.02,
+    'A área interna do desenho deve acompanhar a proporção exibida');
+  assert.ok(pad.boxWidth<=pad.viewportWidth+1,'Janela sem transbordamento horizontal');
+  const canvas=await page.locator('#sign-pad').boundingBox();
+  await page.mouse.move(canvas.x+12,canvas.y+canvas.height-16);
+  await page.mouse.down();
+  await page.mouse.move(canvas.x+canvas.width*.48,canvas.y+16,{steps:10});
+  await page.mouse.move(canvas.x+canvas.width-12,canvas.y+canvas.height*.62,{steps:10});
+  await page.mouse.up();
+  const drawn=await page.evaluate(()=>{
+   const uri=exportSignInk();
+   if(!uri)return null;
+   const c=document.getElementById('sign-pad'),data=signContext.getImageData(0,0,c.width,c.height).data;
+   let left=false,right=false,top=false,bottom=false;
+   for(let y=0;y<c.height;y+=2)for(let x=0;x<c.width;x+=2)if(data[(y*c.width+x)*4+3]>10){
+    if(x<c.width*.05)left=true;
+    if(x>c.width*.94)right=true;
+    if(y<c.height*.09)top=true;
+    if(y>c.height*.87)bottom=true;
+   }
+   return {left,right,top,bottom,url:uri.slice(0,25)};
+  });
+  assert.ok(drawn&&drawn.left&&drawn.right&&drawn.top&&drawn.bottom,
+    'Traços em todas as extremidades úteis devem permanecer íntegros');
+  await page.locator('#sign-cancel').click();
+  assert.ok(await page.locator('#sign-dialog').isHidden(),'Janela fecha normalmente');
+  assert.equal(await page.evaluate(()=>document.querySelector('.paper').getBoundingClientRect().width),
+    await page.evaluate(()=>document.querySelector('.paper').getBoundingClientRect().width),
+    'A assinatura não modifica dimensões da folha');
   console.log('PASSOU assinatura '+scenario.label,JSON.stringify(metrics));
  }finally{await context.close();await browser.close()}
 }

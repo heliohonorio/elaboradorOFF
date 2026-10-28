@@ -44,6 +44,12 @@ for(const engine of [chromium,webkit]){
  assert.equal(await page.evaluate(()=>validateP118()),true,'DS válida');
  assert.equal(await page.locator('#p118-export-open').innerText(),'Salvar/compartilhar arquivo');
  await page.locator('#p118-sign').click();
+ const expandedSign=await page.locator('#sign-pad').evaluate(canvas=>{
+  const rect=canvas.getBoundingClientRect();
+  return {width:rect.width,height:rect.height,rasterRatio:canvas.width/canvas.height,visualRatio:rect.width/rect.height};
+ });
+ assert.ok(expandedSign.height>=270,'PM P-118 também utiliza campo maior de assinatura');
+ assert.ok(Math.abs(expandedSign.rasterRatio-expandedSign.visualRatio)<.02,'Proporção dos traços preservada no PM P-118');
  const applicantPad=await page.locator('#sign-pad').boundingBox();
  await page.mouse.move(applicantPad.x+30,applicantPad.y+40);
  await page.mouse.down();await page.mouse.move(applicantPad.x+130,applicantPad.y+65,{steps:8});await page.mouse.up();

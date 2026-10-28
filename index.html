@@ -501,23 +501,25 @@ html,body{min-height:100%}body{min-height:100dvh}.app{min-height:100dvh;display:
 .sign-dialog[hidden]{display:none!important}
 .sign-dialog{
  position:fixed;inset:0;background:#000c;z-index:10000;
- display:flex;justify-content:center;align-items:center;padding:16px;
+ display:flex;justify-content:center;align-items:center;padding:clamp(8px,1.5vw,16px);
  overscroll-behavior:none;
 }
 .sign-box{
- width:min(100%,620px);max-height:92dvh;overflow-y:auto;
- padding:20px;background:#141417;color:#f7f7f8;
+ width:min(100%,920px);max-height:94dvh;overflow-y:auto;
+ padding:clamp(14px,2.1vw,22px);background:#141417;color:#f7f7f8;
  border:1px solid #575762;border-radius:16px;
  box-shadow:0 20px 70px #0009;
 }
 .sign-box h2{margin:0 0 10px;font-size:19px}
 .sign-box .sign-help{font-size:13px;line-height:1.5;color:#e5e5eb;margin:0 0 14px}
 #sign-pad{
- display:block;width:100%;height:auto;aspect-ratio:960/480;
+ display:block;width:100%;height:min(45dvh,410px);aspect-ratio:auto;box-sizing:border-box;
  background:#fff;border:2px solid #888;border-radius:9px;
  touch-action:none!important;overscroll-behavior:contain!important;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:crosshair;
 }
-.sign-feedback{font-size:12px;height:55px;min-height:55px;line-height:1.35;margin:9px 0;color:#d2d2dd;overflow:hidden}
+/* Maior área de escrita também no iPhone, sem interferir no tamanho das assinaturas do A4. */
+@media(max-width:600px){#sign-pad{height:min(50dvh,400px)}}
+.sign-feedback{font-size:12px;min-height:35px;line-height:1.35;margin:9px 0;color:#d2d2dd;overflow-wrap:anywhere}
 .sign-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .sign-actions .btn{font-size:12px}
 @media print{#sign-open,.sign-dialog{display:none!important}}
@@ -1593,6 +1595,19 @@ function updateSignButton(){
  const btn=el('sign-open');if(btn)btn.textContent=handwrittenSignature?'✍ Alterar assinatura':'✍ Assinar';
  const remove=el('sign-remove');if(remove)remove.hidden=currentDocumentType==='afastamento'&&window.P118Workflow.isSupervisorMode()?true:!(currentDocumentType==='afastamento'?p118Signature:handwrittenSignature);
 }
+function prepareSignPad(){
+ // O tamanho interno acompanha a área visível: o traço mantém proporção real
+ // mesmo quando o espaço cresce no computador ou fica mais alto no celular.
+ signPad.style.height='';
+ const bounds=signPad.getBoundingClientRect();
+ const density=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+ signPad.style.height=bounds.height+'px';
+ signPad.width=Math.max(1,Math.round(bounds.width*density));
+ signPad.height=Math.max(1,Math.round(bounds.height*density));
+ signContext.strokeStyle='#101010';signContext.fillStyle='#101010';
+ signContext.lineWidth=4.5*density;
+ signContext.lineCap='round';signContext.lineJoin='round';
+}
 function clearSignPad(){
  signContext.clearRect(0,0,signPad.width,signPad.height);
  signHasInk=false;signDrawing=false;signPointer=null;signFrozenRect=null;
@@ -1601,13 +1616,17 @@ function closeSignDialog(){
  signDialog.hidden=true;
  signDrawing=false;signPointer=null;signFrozenRect=null;
  unlockSignPage();
+ signPad.style.height='';
  el(currentDocumentType==='afastamento'?(p118SignTarget==='supervisor'?'p118-supervisor-sign':'p118-sign'):'sign-open').focus({preventScroll:true});
 }
 function signPosition(event){
  // Congelar a área de referência durante o desenho evita saltos nos traços.
  const rect=signFrozenRect||signPad.getBoundingClientRect();
- return {x:(event.clientX-rect.left)*signPad.width/rect.width,
-         y:(event.clientY-rect.top)*signPad.height/rect.height};
+ const margin=Math.max(signContext.lineWidth/2+2,6);
+ return {
+  x:Math.max(margin,Math.min(signPad.width-margin,(event.clientX-rect.left)*signPad.width/rect.width)),
+  y:Math.max(margin,Math.min(signPad.height-margin,(event.clientY-rect.top)*signPad.height/rect.height))
+ };
 }
 signPad.addEventListener('touchmove',event=>{
  if(!signDialog.hidden&&event.cancelable)event.preventDefault();
@@ -1660,6 +1679,7 @@ el('sign-open').addEventListener('click',()=>{
   'Desenhe sua assinatura na área branca.';
  lockSignPage();
  signDialog.hidden=false;
+ prepareSignPad();
  el('sign-clear').focus({preventScroll:true});
 });
 el('sign-clear').addEventListener('click',()=>{
