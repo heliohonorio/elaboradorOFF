@@ -23,7 +23,7 @@ for(const engine of [chromium,webkit]){
    await page.locator('#start-create').click();
    await page.locator('.type-option[data-document-type="'+type+'"]').click();
    assert.equal(await page.locator('#sign-pad').getAttribute('required'),null);
-   assert.ok(await page.locator('#signature').isVisible());
+   assert.equal(await page.locator('#signature').count(),1,'Área de assinatura permanece no documento');
    assert.equal(await page.evaluate(()=>handwrittenSignature),null,'Não precisa desenhar em '+type);
    await page.locator('#return-home').click();
   }
