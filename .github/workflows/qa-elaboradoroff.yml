@@ -31,6 +31,7 @@ jobs:
           node tests/preview-visual.mjs
           node tests/signature-regression.mjs
           node tests/share-progress.mjs
+          node tests/action-loading-optional.mjs
           node tests/document-types.mjs
           node tests/afastamento.mjs
           node tests/p118-auto-scroll.mjs
