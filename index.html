@@ -821,11 +821,11 @@ function showStartChoices(){
  el('start-choices').hidden=false;
  el('document-type-chooser').hidden=true;
  el('start-heading').textContent='O que deseja fazer?';
- el('start-description').textContent='Crie um documento ou edite um arquivo existente.';
+ el('start-description').textContent='Crie, edite ou autorize um documento.';
  el('start-eyebrow').textContent='BEM-VINDO AO ELABORADOROFF';
 }
 el('start-create').onclick=()=>{
- el('import-panel').hidden=true;
+ el('import-panel').hidden=true;el('authorize-panel').hidden=true;
  el('start-choices').hidden=true;
  el('document-type-chooser').hidden=false;
  el('start-heading').textContent='Qual tipo de documento?';
@@ -841,7 +841,36 @@ document.querySelectorAll('.type-option').forEach(button=>{
   openEditor('create');
  };
 });
-el('start-import').onclick=()=>{el('import-panel').hidden=false;el('import-file').focus()};
+el('start-import').onclick=()=>{
+ el('authorize-panel').hidden=true;
+ el('import-panel').hidden=false;
+ el('import-file').focus();
+};
+function clearAuthorizeSelection(){
+ el('authorize-file').value='';
+ el('authorize-selected').hidden=true;
+ el('authorize-selected').textContent='';
+ el('authorize-status').textContent='';
+}
+el('start-authorize').onclick=()=>{
+ el('start-choices').hidden=true;
+ el('document-type-chooser').hidden=true;
+ el('import-panel').hidden=true;
+ clearAuthorizeSelection();
+ el('authorize-panel').hidden=false;
+ el('start-heading').textContent='Autorizar DS/LP';
+ el('start-description').textContent='Importe o Word assinado pelo policial para preencher o Encaminhamento 1.';
+ el('start-eyebrow').textContent='SUPERIOR IMEDIATO';
+ el('authorize-select').focus({preventScroll:true});
+ el('authorize-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+el('authorize-select').onclick=()=>el('authorize-file').click();
+el('authorize-back').onclick=()=>{
+ clearAuthorizeSelection();
+ el('authorize-panel').hidden=true;
+ showStartChoices();
+ el('start-authorize').focus({preventScroll:true});
+};
 el('import-back').onclick=()=>{el('import-panel').hidden=true;el('import-status').textContent='';el('import-file').value='';el('import-selected').hidden=true;hideImportProgress()};
 function resetElaboradorForms(){
  window.P118Workflow.clear();el('p118-form').reset();p118Signature=null;
@@ -858,7 +887,7 @@ function resetElaboradorForms(){
  });
  signatureOverride=null;handwrittenSignature=null;metaOverride=null;
  pendingImport=null;documentMode='create';currentDocumentType='parte';
- el('document-type').value='parte';el('import-file').value='';
+ el('document-type').value='parte';el('import-file').value='';clearAuthorizeSelection();
  el('import-selected').hidden=true;el('import-status').textContent='';
  el('ai-status').textContent='';el('relato').value='';
  relatoOriginal=null;el('restore').hidden=true;el('p118-status').textContent='';
@@ -868,7 +897,7 @@ el('return-home').onclick=()=>{
  resetElaboradorForms();
  el('p118-editor').hidden=true;document.body.classList.remove('p118-active');
  el('editor-layout').hidden=true;el('editor-back').hidden=true;
- el('start-screen').hidden=false;el('import-panel').hidden=true;
+ el('start-screen').hidden=false;el('import-panel').hidden=true;el('authorize-panel').hidden=true;
  showStartChoices();window.scrollTo({top:0,behavior:'smooth'});
 };
 async function loadImportLibrary(url,check){
@@ -1028,22 +1057,47 @@ function interpretImportedText(text){
  if(sigIdx>=0){values.nome=sigLines[sigIdx];const next=sigLines[sigIdx+1]||'';const grad=matchGrad(next);if(grad&&!values.grad)values.grad=grad;if(grad&&next.slice(grad.length).trim()&&!values.re)values.funcao=next.slice(grad.length).trim()}
  return {values,recognized:Object.keys(values).filter(k=>values[k]),raw:text};
 }
+el('authorize-file').onchange=async()=>{
+ const file=el('authorize-file').files?.[0],status=el('authorize-status');
+ el('authorize-selected').hidden=!file;
+ el('authorize-selected').textContent=file?'Arquivo selecionado: '+file.name:'';
+ if(!file){status.textContent='';return}
+ if(!file.name.toLocaleLowerCase('pt-BR').endsWith('.docx')){
+  status.textContent='Selecione um documento Word (.docx) gerado pelo ElaboradorOFF.';return;
+ }
+ if(file.size>12*1024*1024){status.textContent='O arquivo deve ter no máximo 12 MB.';return}
+ el('authorize-select').disabled=true;
+ status.textContent='Lendo solicitação assinada...';
+ try{
+  const data=await window.P118Workflow.readWord(file,loadImportLibrary);
+  if(!data)throw Error('Este Word não contém dados do PM P-118 gerado pelo ElaboradorOFF.');
+  resetElaboradorForms();
+  p118Signature=window.P118Workflow.restore(data);
+  normalizeP118Identification();
+  openP118();
+  el('editor-mode').textContent='Autorizando DS/LP';
+  el('p118-status').textContent='Solicitação importada. Preencha somente o Encaminhamento 1 do superior imediato.';
+  requestAnimationFrame(()=>el('p118-supervisor-fields').scrollIntoView({behavior:'smooth',block:'start'}));
+ }catch(error){
+  status.textContent='Não foi possível abrir para autorização: '+(error.message||error);
+ }finally{
+  el('authorize-select').disabled=false;
+ }
+};
 el('import-file').onchange=async()=>{
  const file=el('import-file').files?.[0];pendingImport=null;el('import-confirm').disabled=true;hideImportProgress();el('import-selected').hidden=!file;el('import-selected').textContent=file?'Arquivo selecionado: '+file.name:'';
  if(!file)return;
  if(file.size>12*1024*1024){el('import-status').textContent='O arquivo deve ter no máximo 12 MB.';return}
  el('import-status').textContent='Lendo o documento...';
  try{
-  // O Word P-118 contém os campos estruturados para edição diretamente no ElaboradorOFF.
-   if(file.name.toLowerCase().endsWith('.docx')){
-    const p118=await window.P118Workflow.readWord(file,loadImportLibrary);
-    if(p118){
-     pendingImport={p118:true,data:p118};
-     el('import-status').textContent='PM P-118 identificado. Abrindo somente o Encaminhamento 1.';
-     el('import-confirm').disabled=false;el('import-confirm').click();return;
-    }
+  if(file.name.toLowerCase().endsWith('.docx')){
+   const p118=await window.P118Workflow.readWord(file,loadImportLibrary);
+   if(p118){
+    el('import-status').textContent='Este arquivo é um PM P-118. Volte à tela inicial e selecione “Autorizar DS/LP”.';
+    return;
    }
-   const text=(await extractImportedText(file)).trim();
+  }
+  const text=(await extractImportedText(file)).trim();
   if(text.length<25)throw Error('O arquivo não contém texto legível suficiente, mesmo após a leitura. Tente um PDF mais nítido.');
   pendingImport=interpretImportedText(text);
   if(!el('import-progress').hidden)setImportProgress(100,'Reconhecimento concluído!');
@@ -1054,18 +1108,6 @@ el('import-file').onchange=async()=>{
 };
 el('import-confirm').onclick=()=>{
  if(!pendingImport)return;
- if(pendingImport.p118){
-  const existing=el('p118-nome').value.trim();
-  if(existing&&!confirm('Substituir o P-118 atual pelo documento recebido?'))return;
-  const data=pendingImport.data;hideImportProgress();
-  p118Signature=window.P118Workflow.restore(data);
-  normalizeP118Identification();
-  openP118();
-  el('editor-mode').textContent='Editando P-118 recebido';
-  el('p118-status').textContent='Dados do solicitante bloqueados. Preencha apenas o Encaminhamento 1.';
-  el('p118-supervisor-fields').scrollIntoView({block:'start',behavior:'smooth'});
-  return;
- }
  if(ids.some(id=>el(id).value.trim()&&id!=='data')&&!confirm('Substituir os dados atuais pelos dados do documento importado?'))return;
  ids.forEach(id=>el(id).value='');
  signatureOverride=null;handwrittenSignature=null;updateSignButton();relatoOriginal=null;el('restore').hidden=true;
