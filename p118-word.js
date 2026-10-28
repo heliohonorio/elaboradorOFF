@@ -160,40 +160,45 @@ function zip(files){
  let pos=0;for(const part of [...local,...central,ending]){result.set(part,pos);pos+=part.length}
  return result;
 }
-function create(paper,record){
- if(!paper||!paper.querySelector('.p118-heading'))throw Error('O documento P-118 não está disponível.');
- const crest=decodeDataUrl(paper.querySelector('.p118-heading img').src);
- const signed=paper.querySelector('#p118-ink'),signature=signed&&!signed.hidden&&signed.getAttribute('src')?decodeDataUrl(signed.src):null;
- const tables=[...paper.querySelectorAll(':scope > table.p118-table')];
- if(tables.length!==4)throw Error('O formulário P-118 está incompleto.');
- let body=headingXml();
- // Espaços mínimos equivalentes à separação das tabelas na folha original.
- body+=spacerXml();
- for(const table of tables){body+=tableXml(table);body+=spacerXml()}
- body+=approvalsXml(paper.querySelector('.p118-approvals'));
- const footer=paper.querySelector('.p118-footer');
- body+=paragraph(run(footer.textContent,{size:16}));
- const sect='<w:sectPr><w:pgSz w:w="'+mm(210)+'" w:h="'+mm(297)+'"/><w:pgMar w:top="'+mm(9)+'" w:right="'+mm(12)+'" w:bottom="'+mm(3)+'" w:left="'+mm(17.5)+'" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>';
+/* A representação impressa usa uma página ancorada no A4.
+   Os dados para o editor do superior continuam em customXml/item1.xml. */
+function pagePicture(){
+ const width=210*36000,height=297*36000;
+ return '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr><w:r><w:drawing>'+
+  '<wp:anchor xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="0" behindDoc="0" locked="1" layoutInCell="1" allowOverlap="1">'+
+  '<wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionV>'+
+  '<wp:extent cx="'+width+'" cy="'+height+'"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/>'+
+  '<wp:docPr id="1" name="PM P-118 - Folha A4" descr="Formulário PM P-118. Para autorizar, abra este Word em Autorizar DS/LP no ElaboradorOFF."/>'+
+  '<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>'+
+  '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+  '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="PM P-118"/><pic:cNvPicPr/></pic:nvPicPr>'+
+  '<pic:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+  '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+width+'" cy="'+height+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
+  '</pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>';
+}
+function create(snapshot,record){
+ const page=decodeDataUrl(snapshot);
+ if(!record||record.kind!=='elaboradoroff-p118'||record.version!==1||!record.base)throw Error('Os dados do P-118 estão incompletos.');
  const document='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="'+NS+'" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
- '<w:body>'+body+sect+'</w:body></w:document>';
- const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="'+NS+'"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="13"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>';
- const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>'+(signature?'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image2.png"/>':'')+'<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml" Target="../customXml/item1.xml"/></Relationships>';
- const contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>';
- // Dados estruturados permitem reabrir no ElaboradorOFF sem mudar a aparência do Word.
- const payload=JSON.stringify(record||{});
- const raw=toBytes(payload);let binary='';
+  '<w:body>'+pagePicture()+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>';
+ const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="'+NS+'"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>';
+ const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+  '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/page1.png"/>'+
+  '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+  '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml" Target="../customXml/item1.xml"/></Relationships>';
+ const types='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+  '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>'+
+  '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+  '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>';
+ const payload=JSON.stringify(record),raw=toBytes(payload);let binary='';
  for(let i=0;i<raw.length;i+=16384)binary+=String.fromCharCode(...raw.subarray(i,i+16384));
  const manifest='<?xml version="1.0" encoding="UTF-8"?><p118 xmlns="urn:elaboradoroff:p118" version="1">'+btoa(binary)+'</p118>';
  const files=[
- ['[Content_Types].xml',contentTypes],
- ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
- ['word/document.xml',document],
- ['word/styles.xml',styles],
- ['word/_rels/document.xml.rels',rels],
- ['word/media/image1.png',crest],
- ['customXml/item1.xml',manifest]
+  ['[Content_Types].xml',types],
+  ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+  ['word/document.xml',document],['word/styles.xml',styles],['word/_rels/document.xml.rels',rels],
+  ['word/media/page1.png',page],['customXml/item1.xml',manifest]
  ];
- if(signature)files.push(['word/media/image2.png',signature]);
  return new Blob([zip(files)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
 }
 window.createP118WordDocument=create;
