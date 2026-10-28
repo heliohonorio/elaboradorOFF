@@ -56,7 +56,8 @@ for(const engine of [chromium,webkit]){
  const docxDownload=page.waitForEvent('download');
  await page.locator('#p118-export-save').click();
  const download=await docxDownload;
- assert.equal(download.suggestedFilename(),'ElaboradorOFF - DS Sd PM HELIO DE SOUZA PEREIRA FILHO.docx','Nome do arquivo com um hífen');
+ assert.equal(await page.evaluate(()=>p118ExportFile.name),'ElaboradorOFF - DS Sd PM HELIO DE SOUZA PEREIRA FILHO.docx','Nome interno com um hífen');
+ assert.equal(download.suggestedFilename().replace(/_/g,' '),'ElaboradorOFF - DS Sd PM HELIO DE SOUZA PEREIRA FILHO.docx','Nome sugerido pelo navegador');
  const path=join(output,'word-'+engine.name()+'-'+width+'.docx');
  await download.saveAs(path);
  const listing=execFileSync('unzip',['-Z1',path],{encoding:'utf8'});
@@ -167,7 +168,8 @@ for(const engine of [chromium,webkit]){
   const pdfDownload=page.waitForEvent('download');
   await page.locator('#p118-export-save').click();
   const finished=await pdfDownload;
-  assert.equal(finished.suggestedFilename(),'ElaboradorOFF - DS Sd PM HELIO DE SOUZA PEREIRA FILHO.pdf');
+  assert.equal(await page.evaluate(()=>p118ExportFile.name),'ElaboradorOFF - DS Sd PM HELIO DE SOUZA PEREIRA FILHO.pdf','Nome PDF final');
+  assert.equal(finished.suggestedFilename().replace(/_/g,' '),'ElaboradorOFF - DS Sd PM HELIO DE SOUZA PEREIRA FILHO.pdf');
   await page.locator('#p118-export-close').click();
  }
  await page.locator('#return-home').click();await page.locator('#start-create').click();await page.locator('[data-document-type="parte"]').click();
