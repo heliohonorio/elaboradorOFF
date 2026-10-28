@@ -44,6 +44,11 @@ for (const engine of [chromium, webkit]) {
       check(await page.locator('#document-type-chooser').isVisible(), 'Etapa de seleção abriu');
       check(await page.locator('#start-choices').isHidden(), 'Botões iniciais ocultos');
       check(await page.locator('.type-option').count() === 4, 'Quatro tipos de documento');
+      const displayedOrder = await page.locator('.type-option').evaluateAll(items => items.map(item => item.dataset.documentType));
+      assert.deepEqual(displayedOrder, ['parte','afastamento','memorando','oficio'], 'Ordem dos documentos');
+      const displayedNumbers = await page.locator('.type-option-number').allTextContents();
+      assert.deepEqual(displayedNumbers, ['01','02','03','04'], 'Numeração da lista');
+
       check(await page.locator('.type-option').first().evaluate(el => el === document.activeElement), 'Foco de teclado na primeira opção');
 
       await page.locator('#choose-document-back').click();
