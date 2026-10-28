@@ -160,7 +160,7 @@ function zip(files){
  let pos=0;for(const part of [...local,...central,ending]){result.set(part,pos);pos+=part.length}
  return result;
 }
-function create(paper){
+function create(paper,record){
  if(!paper||!paper.querySelector('.p118-heading'))throw Error('O documento P-118 não está disponível.');
  const crest=decodeDataUrl(paper.querySelector('.p118-heading img').src);
  const signed=paper.querySelector('#p118-ink'),signature=signed&&!signed.hidden&&signed.getAttribute('src')?decodeDataUrl(signed.src):null;
@@ -177,15 +177,21 @@ function create(paper){
  const document='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="'+NS+'" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
  '<w:body>'+body+sect+'</w:body></w:document>';
  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="'+NS+'"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="13"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>';
- const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>'+(signature?'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image2.png"/>':'')+'<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+ const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>'+(signature?'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image2.png"/>':'')+'<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml" Target="../customXml/item1.xml"/></Relationships>';
  const contentTypes='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>';
+ // Dados estruturados permitem reabrir no ElaboradorOFF sem mudar a aparência do Word.
+ const payload=JSON.stringify(record||{});
+ const raw=toBytes(payload);let binary='';
+ for(let i=0;i<raw.length;i+=16384)binary+=String.fromCharCode(...raw.subarray(i,i+16384));
+ const manifest='<?xml version="1.0" encoding="UTF-8"?><p118 xmlns="urn:elaboradoroff:p118" version="1">'+btoa(binary)+'</p118>';
  const files=[
  ['[Content_Types].xml',contentTypes],
  ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
  ['word/document.xml',document],
  ['word/styles.xml',styles],
  ['word/_rels/document.xml.rels',rels],
- ['word/media/image1.png',crest]
+ ['word/media/image1.png',crest],
+ ['customXml/item1.xml',manifest]
  ];
  if(signature)files.push(['word/media/image2.png',signature]);
  return new Blob([zip(files)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
