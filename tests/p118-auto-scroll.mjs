@@ -86,7 +86,8 @@ for(const engine of [chromium,webkit]){
   // Um gesto manual cancela inclusive callbacks agendados durante o foco.
   await page.evaluate(()=>{
    Object.defineProperty(window.visualViewport,'height',{configurable:true,get:()=>innerHeight-200});
-   document.getElementById('p118-inicio').focus({preventScroll:true});
+   // O motivo já está focado: isolar callbacks do sistema sem abrir o calendário nativo.
+   p118ScheduleFieldScroll(document.activeElement);
    window.dispatchEvent(new Event('touchmove'));
    window.scrollTo({top:0,behavior:'instant'});
    window.visualViewport.dispatchEvent(new Event('resize'));
