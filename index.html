@@ -2052,9 +2052,27 @@ p118Fields.forEach(key=>el('p118-'+key).addEventListener('input',()=>{
    e acompanhar os botões Próximo/Anterior do teclado iOS sem rolar o A4. */
 let p118ScrollTimer=null;
 let p118ViewportFrame=null;
+let p118ScrollField=null;
+let p118ScrollUntil=0;
+function p118CancelFieldScroll(){
+ clearTimeout(p118ScrollTimer);
+ p118ScrollTimer=null;
+ if(p118ViewportFrame!==null)cancelAnimationFrame(p118ViewportFrame);
+ p118ViewportFrame=null;
+ p118ScrollField=null;
+ p118ScrollUntil=0;
+}
+function p118KeyboardVisible(){
+ const viewport=window.visualViewport;
+ if(!viewport||Math.abs(viewport.scale-1)>.05)return false;
+ const height=Math.max(document.documentElement.clientHeight,window.innerHeight);
+ // Barras do navegador não devem ser confundidas com o teclado.
+ return height-viewport.height>Math.max(120,height*.2);
+}
 const p118MobileForm=()=>window.matchMedia('(max-width:820px)').matches&&!el('p118-editor').hidden;
 function p118KeepFieldVisible(field,behavior='smooth'){
- if(!p118MobileForm()||!field||field!==document.activeElement||
+ if(!p118MobileForm()||!field||field!==p118ScrollField||Date.now()>p118ScrollUntil||
+    !p118KeyboardVisible()||field!==document.activeElement||
     !el('p118-form').contains(field)||!el('p118-export-dialog').hidden)return;
  const viewport=window.visualViewport;
  const viewportTop=viewport?.offsetTop||0;
@@ -2071,12 +2089,22 @@ function p118KeepFieldVisible(field,behavior='smooth'){
 }
 function p118ScheduleFieldScroll(field){
  if(!p118MobileForm())return;
- clearTimeout(p118ScrollTimer);
- requestAnimationFrame(()=>p118KeepFieldVisible(field,'smooth'));
+ p118CancelFieldScroll();
+ p118ScrollField=field;
+ // Ajudar somente durante a abertura do teclado ou a troca de campo.
+ p118ScrollUntil=Date.now()+1200;
+ p118ViewportFrame=requestAnimationFrame(()=>{
+  p118ViewportFrame=null;
+  p118KeepFieldVisible(field,'auto');
+ });
  // No Safari, o teclado muda o visualViewport após o evento de foco.
  p118ScrollTimer=setTimeout(()=>p118KeepFieldVisible(field,'auto'),300);
 }
 const p118Form=el('p118-form');
+p118Form.addEventListener('focusout',p118CancelFieldScroll);
+// Um gesto manual encerra o ajuste, inclusive callbacks ainda pendentes.
+window.addEventListener('touchmove',p118CancelFieldScroll,{passive:true});
+window.addEventListener('wheel',p118CancelFieldScroll,{passive:true});
 p118Form.addEventListener('focusin',event=>{
  if(event.target.matches('input,select,textarea'))p118ScheduleFieldScroll(event.target);
 });
@@ -2096,6 +2124,7 @@ p118Form.addEventListener('keydown',event=>{
 });
 if(window.visualViewport){
  window.visualViewport.addEventListener('resize',()=>{
+  if(!p118ScrollField||Date.now()>p118ScrollUntil)return;
   if(p118ViewportFrame!==null)cancelAnimationFrame(p118ViewportFrame);
   p118ViewportFrame=requestAnimationFrame(()=>{
    p118ViewportFrame=null;
