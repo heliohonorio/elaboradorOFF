@@ -27,7 +27,11 @@ for(const engine of [chromium,webkit]){
   assert.notEqual(atOpen.focused,'p118-re','Não abrir o teclado automaticamente no iPhone');
   assert.ok(atOpen.width<=atOpen.available+1,'Sem rolagem horizontal');
 
-  // Foco programático sem rolagem nativa: a implementação deve levar o campo à tela.
+  // Simular somente a área visual reduzida pelo teclado; o layout não encolhe.
+  await page.evaluate(()=>{
+   Object.defineProperty(window.visualViewport,'height',{configurable:true,get:()=>innerHeight-200});
+  });
+  // Com teclado aberto, levar o campo focado à área visível.
   await page.evaluate(()=>{
    window.scrollTo({top:0,behavior:'instant'});
    document.getElementById('p118-motivo').focus({preventScroll:true});
@@ -52,7 +56,7 @@ for(const engine of [chromium,webkit]){
   await page.keyboard.press('Enter');
   assert.ok((await page.locator('#p118-motivo').inputValue()).includes('\n'),'Textarea mantém nova linha');
 
-  await page.setViewportSize({width:390,height:340});
+  await page.setViewportSize({width:390,height:500});
   await page.evaluate(()=>document.getElementById('p118-inicio').focus({preventScroll:true}));
   await page.waitForTimeout(450);
   const dateBounds=await page.evaluate(()=>{
@@ -60,6 +64,36 @@ for(const engine of [chromium,webkit]){
    return {top:rect.top,bottom:rect.bottom,viewport:visualViewport?.height||innerHeight};
   });
   assert.ok(dateBounds.top>=-4&&dateBounds.bottom<=dateBounds.viewport+4,'Campo de data visível com janela reduzida');
+  // Fechar o teclado mantendo o campo focado não deve puxar a página.
+  await page.evaluate(()=>{
+   delete window.visualViewport.height;
+   window.scrollTo({top:0,behavior:'instant'});
+   window.visualViewport.dispatchEvent(new Event('resize'));
+  });
+  await page.waitForTimeout(350);
+  assert.equal(await page.evaluate(()=>scrollY),0,'Teclado fechado respeita a posição manual');
+
+  // Variação pequena das barras do navegador não é abertura do teclado.
+  await page.evaluate(()=>{
+   document.getElementById('p118-motivo').focus({preventScroll:true});
+   window.scrollTo({top:0,behavior:'instant'});
+   Object.defineProperty(window.visualViewport,'height',{configurable:true,get:()=>innerHeight-60});
+   window.visualViewport.dispatchEvent(new Event('resize'));
+  });
+  await page.waitForTimeout(350);
+  assert.equal(await page.evaluate(()=>scrollY),0,'Barras do navegador não puxam a tela');
+
+  // Um gesto manual cancela inclusive callbacks agendados durante o foco.
+  await page.evaluate(()=>{
+   Object.defineProperty(window.visualViewport,'height',{configurable:true,get:()=>innerHeight-200});
+   document.getElementById('p118-inicio').focus({preventScroll:true});
+   window.dispatchEvent(new Event('touchmove'));
+   window.scrollTo({top:0,behavior:'instant'});
+   window.visualViewport.dispatchEvent(new Event('resize'));
+  });
+  await page.waitForTimeout(350);
+  assert.equal(await page.evaluate(()=>scrollY),0,'Rolagem manual tem prioridade com teclado aberto');
+  await page.evaluate(()=>delete window.visualViewport.height);
   assert.deepEqual(errors,[],'Sem erros JavaScript');
   console.log('Auto-scroll P-118 OK:',engine.name());
   await page.close();
