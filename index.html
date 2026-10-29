@@ -1670,8 +1670,8 @@ function unlockSignPage(){
  for(const prop of Object.keys(oldHtml))html.style[prop]=oldHtml[prop];
  window.scrollTo(0,scrollY);
 }
-signContext.strokeStyle='#101010';signContext.fillStyle='#101010';
-signContext.lineWidth=4.5;signContext.lineCap='round';signContext.lineJoin='round';
+signContext.strokeStyle='#173b8f';signContext.fillStyle='#173b8f';
+signContext.lineWidth=1.6;signContext.lineCap='round';signContext.lineJoin='round';
 
 function updateSignButton(){
  const btn=el('sign-open');if(btn)btn.textContent=handwrittenSignature?'✍ Alterar assinatura':'✍ Assinar';
@@ -1686,8 +1686,8 @@ function prepareSignPad(){
  signPad.style.height=bounds.height+'px';
  signPad.width=Math.max(1,Math.round(bounds.width*density));
  signPad.height=Math.max(1,Math.round(bounds.height*density));
- signContext.strokeStyle='#101010';signContext.fillStyle='#101010';
- signContext.lineWidth=4.5*density;
+ signContext.strokeStyle='#173b8f';signContext.fillStyle='#173b8f';
+ signContext.lineWidth=1.6*density;
  signContext.lineCap='round';signContext.lineJoin='round';
 }
 function clearSignPad(){

@@ -92,13 +92,17 @@ for(const scenario of [
   const pad=await page.locator('#sign-pad').evaluate(canvas=>{
    const rect=canvas.getBoundingClientRect(),box=document.querySelector('.sign-box').getBoundingClientRect();
    return {width:rect.width,height:rect.height,rasterWidth:canvas.width,
-    rasterHeight:canvas.height,boxWidth:box.width,viewportWidth:innerWidth,viewportHeight:innerHeight};
+    rasterHeight:canvas.height,boxWidth:box.width,viewportWidth:innerWidth,viewportHeight:innerHeight,
+    stroke:signContext.strokeStyle,strokeWidth:signContext.lineWidth,
+    density:Math.min(2,Math.max(1,devicePixelRatio||1))};
   });
   assert.ok(pad.width >= (scenario.label==='iphone'?310:750),'Área de assinatura deve ficar mais larga');
   assert.ok(pad.height >= (scenario.label==='iphone'?270:330),'Área de assinatura deve ficar mais alta');
   assert.ok(Math.abs(pad.rasterWidth/pad.rasterHeight-pad.width/pad.height)<.02,
     'A área interna do desenho deve acompanhar a proporção exibida');
   assert.ok(pad.boxWidth<=pad.viewportWidth+1,'Janela sem transbordamento horizontal');
+  assert.equal(pad.stroke,'#173b8f','Tinta azul-escura no capturador compartilhado');
+  assert.ok(Math.abs(pad.strokeWidth/pad.density-1.6)<.01,'Traço fino com mesma espessura visual em cada tela');
   const canvas=await page.locator('#sign-pad').boundingBox();
   await page.mouse.move(canvas.x+12,canvas.y+canvas.height-16);
   await page.mouse.down();
@@ -109,17 +113,20 @@ for(const scenario of [
    const uri=exportSignInk();
    if(!uri)return null;
    const c=document.getElementById('sign-pad'),data=signContext.getImageData(0,0,c.width,c.height).data;
-   let left=false,right=false,top=false,bottom=false;
+   let left=false,right=false,top=false,bottom=false,bluePixels=0;
    for(let y=0;y<c.height;y+=2)for(let x=0;x<c.width;x+=2)if(data[(y*c.width+x)*4+3]>10){
+    const i=(y*c.width+x)*4;
+    if(data[i+3]>200&&data[i+2]>data[i]+60&&data[i+2]>data[i+1]+40)bluePixels++;
     if(x<c.width*.05)left=true;
     if(x>c.width*.94)right=true;
     if(y<c.height*.09)top=true;
     if(y>c.height*.87)bottom=true;
    }
-   return {left,right,top,bottom,url:uri.slice(0,25)};
+   return {left,right,top,bottom,bluePixels,url:uri.slice(0,25)};
   });
   assert.ok(drawn&&drawn.left&&drawn.right&&drawn.top&&drawn.bottom,
     'Traços em todas as extremidades úteis devem permanecer íntegros');
+  assert.ok(drawn.bluePixels>50,'O desenho contém tinta azul visível');
   await page.locator('#sign-cancel').click();
   assert.ok(await page.locator('#sign-dialog').isHidden(),'Janela fecha normalmente');
   assert.equal(await page.evaluate(()=>document.querySelector('.paper').getBoundingClientRect().width),
