@@ -30,7 +30,7 @@ for(const engine of [chromium,webkit]){
       // Medir somente a região da assinatura: o brasão também contém essas cores.
       if(pageImage&&(cyan?y<canvas.height*.7:x<canvas.width*.6||y>canvas.height*.25))continue;
       const i=(y*canvas.width+x)*4;
-      if(d[i+3]>90&&(cyan?d[i]<90&&d[i+1]>110&&d[i+2]>110:d[i]>110&&d[i+1]<90&&d[i+2]>110)){
+      if(d[i+3]>10&&(cyan?d[i+1]-d[i]>20&&d[i+2]-d[i]>20:d[i]-d[i+1]>20&&d[i+2]-d[i+1]>20)){
        left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
       }
      }
