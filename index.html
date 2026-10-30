@@ -2013,6 +2013,27 @@ function validateP118(){
  }
  return true;
 }
+/* Preservar no conversor as proporções que object-fit exibe na prévia.
+   Ajustar apenas a cópia de exportação, mantendo a área livre do superior. */
+function fitP118ExportSignatures(paper){
+ for(const ink of paper.querySelectorAll('#p118-ink, #p118-supervisor-ink')){
+  if(ink.hidden||!ink.naturalWidth||!ink.naturalHeight)continue;
+  const css=getComputedStyle(ink);
+  const boxWidth=parseFloat(css.width),boxHeight=parseFloat(css.height);
+  if(!(boxWidth>0&&boxHeight>0))continue;
+  const scale=Math.min(boxWidth/ink.naturalWidth,boxHeight/ink.naturalHeight);
+  const width=ink.naturalWidth*scale,height=ink.naturalHeight*scale;
+  // Solicitante: centro. Superior: centro inferior, como na prévia.
+  const left=parseFloat(css.left);
+  if(Number.isFinite(left))ink.style.left=(left+(boxWidth-width)/2)+'px';
+  if(ink.id==='p118-ink'){
+   const top=parseFloat(css.top);
+   if(Number.isFinite(top))ink.style.top=(top+(boxHeight-height)/2)+'px';
+  }
+  ink.style.width=width+'px';
+  ink.style.height=height+'px';
+ }
+}
 async function createP118WordSnapshot(){
  // A versão Word utiliza a mesma prévia A4 renderizada pelo PDF.
  // O arquivo continua contendo os dados editáveis pelo ElaboradorOFF.
@@ -2024,6 +2045,7 @@ async function createP118WordSnapshot(){
  try{
   await document.fonts.ready;
   await Promise.all([...copy.querySelectorAll('img')].filter(img=>img.getAttribute('src')).map(img=>img.decode()));
+  fitP118ExportSignatures(copy);
   const canvas=await window.html2canvas(copy,{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:1000});
   return canvas.toDataURL('image/png');
  }finally{holder.remove()}
@@ -2035,6 +2057,7 @@ async function createP118Pdf(){
  try{
   await document.fonts.ready;
   await Promise.all([...copy.querySelectorAll('img')].filter(img=>img.getAttribute('src')).map(img=>img.decode()));
+  fitP118ExportSignatures(copy);
   const canvas=await window.html2canvas(copy,{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:1000});
   const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
   pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,210,297);return pdf.output('blob');
