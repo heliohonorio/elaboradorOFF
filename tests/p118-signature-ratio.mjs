@@ -23,10 +23,12 @@ for(const engine of [chromium,webkit]){
      return c.toDataURL();
     };
     const applicant=make(w,h,'#d000d0'),supervisor=make(w,h,'#00bcbc');
-    const count=(canvas,cyan)=>{
+    const count=(canvas,cyan,pageImage=false)=>{
      const d=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
      let left=canvas.width,right=-1,top=canvas.height,bottom=-1;
      for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){
+      // Medir somente a região da assinatura: o brasão também contém essas cores.
+      if(pageImage&&(cyan?y<canvas.height*.7:x<canvas.width*.6||y>canvas.height*.25))continue;
       const i=(y*canvas.width+x)*4;
       if(d[i+3]>90&&(cyan?d[i]<90&&d[i+1]>110&&d[i+2]>110:d[i]>110&&d[i+1]<90&&d[i+2]>110)){
        left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
@@ -46,7 +48,7 @@ for(const engine of [chromium,webkit]){
     const originalStyle=el('p118-ink').getAttribute('style');
     const captured=[],old=window.html2canvas;
     window.html2canvas=async(...args)=>{
-     const canvas=await old(...args);captured.push({applicant:count(canvas,false),supervisor:count(canvas,true)});
+     const canvas=await old(...args);captured.push({applicant:count(canvas,false,true),supervisor:count(canvas,true,true)});
      return canvas;
     };
     try{
