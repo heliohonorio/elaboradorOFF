@@ -69,11 +69,13 @@ for(const engine of [chromium,webkit]){
       pdfSizes:[firstPdf.size,finalPdf.size]};
     }finally{window.html2canvas=old}
    },{w,h});
+   console.log('MEDIDAS',engine.name(),w,h,JSON.stringify({expected:result.expected,captured:result.captured}));
+   if(w===514){await writeFile('qa-output/p118-ratio-debug.png',Buffer.from(result.wordPng.split(',')[1],'base64'))}
    assert(result.rawUnchanged&&result.sourceUnchanged&&result.styleUnchanged,'Original e prévia preservados após exportar e reimportar');
    assert.equal(result.captured.length,3,'Word, PDF inicial e PDF autorizado renderizados');
    for(const capture of result.captured){
     assert(capture.applicant,'Tinta do solicitante presente');
-    assert(Math.abs(capture.applicant/result.expected-1)<.06,'Assinatura do solicitante sem deformação');
+    assert(Math.abs(capture.applicant/result.expected-1)<.06,'Assinatura do solicitante sem deformação: '+JSON.stringify({expected:result.expected,captured:result.captured}));
    }
    assert(Math.abs(result.captured[2].supervisor/result.supervisorExpected-1)<.06,'Assinatura do superior sem deformação');
    assert(result.overlay.width>result.overlay.cellWidth,'Área de sobreposição do superior preservada');
