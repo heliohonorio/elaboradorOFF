@@ -1296,7 +1296,7 @@ function render(){const first=el('paper');const sig=el('signature');if(sig&&sig.
 const ppmqType=el('ppmq-prata').checked?'Prata':el('ppmq-bronze').checked?'Bronze':'';
  const ppmqSeal=el('ppmq-crest-seal');
  if(ppmqType){
-  const source='assets/ppmq-'+ppmqType.toLowerCase()+'.png';
+  const source='premio-policia-'+ppmqType.toLowerCase()+'.png';
   ppmqSeal.alt='Prêmio Polícia Militar da Qualidade — '+ppmqType;
   if(ppmqSeal.getAttribute('src')!==source)ppmqSeal.src=source;
   ppmqSeal.hidden=false;
