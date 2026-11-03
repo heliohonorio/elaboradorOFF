@@ -776,7 +776,8 @@ body.p118-active .intro{display:none}
 <div class="step"><label for="nome">3. Nome completo</label><input id="nome" placeholder="Nome do signatário" autocomplete="name"></div>
 <div class="step"><label for="guerra">4. Nome de guerra</label><input id="guerra" placeholder="Ex.: Filho" autocapitalize="words" autocomplete="off" spellcheck="false"><small>Utilizado na linha “Do” do cabeçalho. O nome completo permanece na assinatura.</small></div><div class="step"><label for="cidade">5. Município</label><input id="cidade" placeholder="Ex.: São Paulo"></div>
 <div class="step"><label for="emailUnidade">E-mail institucional da unidade</label><div class="unit-email-row"><input id="emailUnidade" type="text" inputmode="email" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Ex.: cpam1" aria-describedby="email-unidade-help"><span>@policiamilitar.sp.gov.br</span></div><small id="email-unidade-help">Digite somente o prefixo, como cpam1. O domínio é preenchido automaticamente.</small></div>
-<div class="ppmq-step" id="ppmq-step">
+
+<div class="step" id="address-step" hidden><label for="enderecoUnidade">Endereço completo da unidade <span class="required" aria-label="obrigatório">*</span></label><textarea id="enderecoUnidade" rows="3" placeholder="Rua, número, bairro, município/UF, CEP e telefone"></textarea><small>Aparece abaixo do e-mail da unidade somente no Ofício.</small></div><div class="ppmq-step" id="ppmq-step">
   <label>Selo de qualidade da unidade <small>(opcional)</small></label>
   <div class="ppmq-checkboxes" role="group" aria-label="Selecionar selo de qualidade">
     <label class="ppmq-disabled" title="Ouro indisponível"><span class="ppmq-red-x" aria-hidden="true">✕</span> Ouro <small>Indisponível</small></label>
@@ -784,7 +785,7 @@ body.p118-active .intro{display:none}
     <label><input id="ppmq-bronze" type="checkbox" autocomplete="off"> Bronze</label>
   </div>
 </div>
-<div class="step" id="address-step" hidden><label for="enderecoUnidade">Endereço completo da unidade <span class="required" aria-label="obrigatório">*</span></label><textarea id="enderecoUnidade" rows="3" placeholder="Rua, número, bairro, município/UF, CEP e telefone"></textarea><small>Aparece abaixo do e-mail da unidade somente no Ofício.</small></div><div class="step"><label for="data">6. Data da parte</label><input id="data" type="date"></div>
+<div class="step"><label for="data">6. Data da parte</label><input id="data" type="date"></div>
 <div class="step"><label for="numero">7. Número da parte</label><input id="numero" placeholder="Ex.: 38ºBPM/M 075/2.3/26" maxlength="45" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-describedby="numero-ajuda numero-aviso"><small id="numero-ajuda">Aceita siglas, º, hífen, espaço, barras e pontos. A numeração não será alterada automaticamente.</small><small id="numero-aviso" role="status" style="display:block;margin-top:6px"></small></div>
 <div class="step"><label for="destinatario">8. Destinatário</label><input id="destinatario" placeholder="Ex.: Ao Sr. Comandante..."></div>
 <div class="step"><label for="assunto">9. Assunto</label><input id="assunto" placeholder="Ex.: Alteração de férias"></div>
@@ -1501,6 +1502,10 @@ async function createDocumentPdf(onProgress){
  const paginationError=el('validation').textContent;
  if(paginationError.startsWith('Não foi possível paginar'))throw Error(paginationError);
  const originals=allPaperPages();
+ // Aguardar selos originais carregarem antes da captura, evitando PDF sem imagem.
+ await Promise.all(originals.flatMap(p=>[...p.querySelectorAll('.ppmq-crest-seal:not([hidden])')]).map(async seal=>{
+  if(!seal.complete||!seal.naturalWidth)await seal.decode();
+ }));
  // Aplicar as mesmas dimensões explícitas à imagem antes de clonar para o PDF.
  await Promise.all(originals.flatMap(p=>[...p.querySelectorAll('.signature-handwriting')]).map(async ink=>{
   if(!ink.complete||!ink.naturalWidth)await ink.decode();
