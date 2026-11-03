@@ -1715,7 +1715,7 @@ function unlockSignPage(){
  for(const prop of Object.keys(oldHtml))html.style[prop]=oldHtml[prop];
  window.scrollTo(0,scrollY);
 }
-signContext.strokeStyle='#173b8f';signContext.fillStyle='#173b8f';
+signContext.strokeStyle='#000000';signContext.fillStyle='#000000';
 signContext.lineWidth=1.6;signContext.lineCap='round';signContext.lineJoin='round';
 
 function updateSignButton(){
@@ -1731,7 +1731,7 @@ function prepareSignPad(){
  signPad.style.height=bounds.height+'px';
  signPad.width=Math.max(1,Math.round(bounds.width*density));
  signPad.height=Math.max(1,Math.round(bounds.height*density));
- signContext.strokeStyle='#173b8f';signContext.fillStyle='#173b8f';
+ signContext.strokeStyle='#000000';signContext.fillStyle='#000000';
  signContext.lineWidth=1.6*density;
  signContext.lineCap='round';signContext.lineJoin='round';
 }
