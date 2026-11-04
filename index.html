@@ -1199,7 +1199,7 @@ let signatureOverride=null;let handwrittenSignature=null;function renderRelato(t
 }
 const unitEmailDomain='@policiamilitar.sp.gov.br';
 function institutionalEmail(value){return value.trim().toLowerCase().replace(/@policiamilitar\.sp\.gov\.br$/i,'')+unitEmailDomain}
-function titleCaseWarName(name){const s=name.trim().toLocaleLowerCase('pt-BR');return s?s[0].toLocaleUpperCase('pt-BR')+s.slice(1):''}
+function titleCaseWarName(name){const s=name.trim().toLocaleLowerCase('pt-BR');return s.replace(/(^|[\s.'’\-])(\p{L})/gu,(_,separator,letter)=>separator+letter.toLocaleUpperCase('pt-BR'))}
 function fitInstitutionalEmail(){
  const node=el('crest-unit-email');if(!node)return;
  // O modelo da PMESP exige Times New Roman 8 pt: nunca reduzir.
