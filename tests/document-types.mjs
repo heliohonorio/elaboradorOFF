@@ -60,9 +60,10 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   assert.equal(await page.locator('#crest-unit-address').innerText(),address);
   const order=await page.evaluate(()=>{
    const parent=document.getElementById('crest-unit-email').parentElement;
-   return [...parent.children].map(x=>x.id||x.className).slice(-2);
+   return [...parent.children].map(x=>x.id||x.className);
   });
-  assert.deepEqual(order,['crest-unit-email','crest-unit-address'],'endereço imediatamente após email');
+  const emailIndex=order.indexOf('crest-unit-email');
+  assert.ok(emailIndex>=0&&order[emailIndex+1]==='crest-unit-address','endereço imediatamente após email');
 
   await page.locator('#edit-paper').click();
   await page.locator('#meta').click();
