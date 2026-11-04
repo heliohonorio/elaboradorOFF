@@ -22,9 +22,9 @@ async function checkWarName(page,type){
   ['FILHO','Filho']
  ]){
   await field.fill(value);
-  const lines=(await page.locator('#meta').innerText()).split('\n');
+  const lines=await page.locator('#meta .meta-line').allTextContents();
   assert.ok(lines.some(line=>line.startsWith('Do ')&&line.endsWith(' '+expected)),
-   'Nome de guerra em '+type+': '+value+' deveria aparecer como '+expected);
+   'Nome de guerra em '+type+': '+value+' deveria aparecer como '+expected+' - linhas: '+JSON.stringify(lines));
  }
  await field.fill('');
 }
