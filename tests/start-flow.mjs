@@ -106,8 +106,8 @@ for (const engine of [chromium, webkit]) {
           ['FILHO', 'Filho']
         ]) {
           await page.locator('#guerra').fill(input);
-          const from = (await page.locator('#meta').innerText()).split('\n').find(line => line.startsWith('Do '));
-          check(from?.endsWith(' ' + expected), 'Nome de guerra ' + input + ' em ' + item.label);
+          const from = (await page.locator('#meta .meta-line').allTextContents()).find(line => line.startsWith('Do '));
+          check(from?.endsWith(' ' + expected), 'Nome de guerra ' + input + ' em ' + item.label + ' - obtido: '+JSON.stringify(from));
         }
         await page.locator('#guerra').fill('');
         await page.locator('#return-home').click();
