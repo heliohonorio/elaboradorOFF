@@ -99,6 +99,17 @@ for (const engine of [chromium, webkit]) {
         check(info.addressHidden === !item.needsAddress, 'Endereço exclusivo do Ofício: ' + item.label);
         check(info.addressRequired === item.needsAddress, 'Obrigatoriedade do endereço: ' + item.label);
         check(info.hasPaper, 'Prévia A4 preservada: ' + item.label);
+        for (const [input, expected] of [
+          ['C. FERNANDO', 'C. Fernando'],
+          ['M. A. SOUZA', 'M. A. Souza'],
+          ['JOÃO PEDRO', 'João Pedro'],
+          ['FILHO', 'Filho']
+        ]) {
+          await page.locator('#guerra').fill(input);
+          const from = (await page.locator('#meta').innerText()).split('\n').find(line => line.startsWith('Do '));
+          check(from?.endsWith(' ' + expected), 'Nome de guerra ' + input + ' em ' + item.label);
+        }
+        await page.locator('#guerra').fill('');
         await page.locator('#return-home').click();
         check(await page.locator('#start-choices').isVisible(), 'Página inicial restaurada após ' + item.label);
         check(await page.locator('#document-type-chooser').isHidden(), 'Seletor fechado ao voltar: ' + item.label);
