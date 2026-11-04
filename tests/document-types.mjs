@@ -13,6 +13,21 @@ async function checkSignDialog(page,type){
  assert.ok(Math.abs(metrics.ratio-metrics.visual)<.02,'Traço sem distorção em '+type);
  await page.locator('#sign-cancel').click();
 }
+async function checkWarName(page,type){
+ const field=page.locator('#guerra');
+ for(const [value,expected] of [
+  ['C. FERNANDO','C. Fernando'],
+  ['M. A. SOUZA','M. A. Souza'],
+  ['JOÃO PEDRO','João Pedro'],
+  ['FILHO','Filho']
+ ]){
+  await field.fill(value);
+  const lines=(await page.locator('#meta').innerText()).split('\n');
+  assert.ok(lines.some(line=>line.startsWith('Do ')&&line.endsWith(' '+expected)),
+   'Nome de guerra em '+type+': '+value+' deveria aparecer como '+expected);
+ }
+ await field.fill('');
+}
 for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
  const browser=await browserType.launch({headless:true});
  const page=await browser.newPage({viewport:{width:1440,height:1000}});
@@ -26,6 +41,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   assert.equal(await page.locator('#address-step').isVisible(),false,'endereço não aparece na Parte');
   assert.equal(await page.locator('#crest-unit-address').isVisible(),false,'endereço não é impresso na Parte');
   assert.match(await page.locator('#meta').innerText(),/PARTE Nº/);
+  await checkWarName(page,'Parte');
   await checkSignDialog(page,'Parte');
 
   await page.locator('#return-home').click();
@@ -39,6 +55,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.locator('#numero').fill('DL-009/2026');
   await page.evaluate(()=>{const field=document.getElementById('assunto');field.value='Teste inicial';field.dispatchEvent(new Event('input',{bubbles:true}))});
   assert.match(await page.locator('#meta').innerText(),/OFÍCIO Nº DL-009\/2026/);
+  await checkWarName(page,'Ofício');
   await checkSignDialog(page,'Ofício');
   assert.equal(await page.locator('#crest-unit-address').innerText(),address);
   const order=await page.evaluate(()=>{
@@ -78,6 +95,7 @@ for(const [name,browserType] of [['Chromium',chromium],['WebKit',webkit]]){
   assert.equal(await page.locator('#address-step').isVisible(),false,'Memorando não mostra endereço');
   assert.equal(await page.locator('#crest-unit-address').isVisible(),false,'Memorando não imprime endereço');
   assert.match(await page.locator('#meta').innerText(),/MEMORANDO Nº/);
+  await checkWarName(page,'Memorando');
   await checkSignDialog(page,'Memorando');
   assert.equal(await page.locator('#enderecoUnidade').evaluate(e=>e.required),false);
 
